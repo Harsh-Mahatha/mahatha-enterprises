@@ -6,3 +6,4 @@ export * from "./product";
 export * from "./stock-movement";
 export * from "./payment";
 export * from "./ledger";
+export * from "./invoice";

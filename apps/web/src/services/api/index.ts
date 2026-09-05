@@ -6,3 +6,4 @@ export * as productService from "./products";
 export * as inventoryService from "./inventory";
 export * as paymentService from "./payments";
 export * as ledgerService from "./ledger";
+export * as invoiceService from "./invoices";

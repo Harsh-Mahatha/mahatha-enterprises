@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mahatha/calculations": "*",
     "@mahatha/config": "*",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",

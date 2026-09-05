@@ -69,6 +69,13 @@ model Session {
   @@index([userId])
 }
 
+// A single-row counter used to generate sequential invoice numbers
+// (INV-000001, ...) atomically within the invoice-creation transaction.
+model InvoiceCounter {
+  id    String @id @default("singleton")
+  value Int    @default(0)
+}
+
 model CompanySettings {
   id            String   @id @default(uuid()) @db.Uuid
   businessName  String
