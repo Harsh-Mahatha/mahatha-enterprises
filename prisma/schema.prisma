@@ -1,9 +1,232 @@
-// Domain models are introduced in Phase 2 of the V1 build plan.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum ProductUnit {
+  PIECE
+  BOX
+  KG
+  LITRE
+  METER
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  BANK
+  OTHER
+}
+
+enum LedgerEntryType {
+  OPENING_BALANCE
+  INVOICE
+  PAYMENT
+}
+
+enum StockMovementType {
+  STOCK_ENTRY
+  SALE
+  ADJUSTMENT
+}
+
+enum InvoiceStatus {
+  PAID
+  PARTIAL
+  UNPAID
+}
+
+// ---------------------------------------------------------------------------
+// Auth & company
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CompanySettings {
+  id            String   @id @default(uuid()) @db.Uuid
+  businessName  String
+  address       String?
+  phone         String?
+  email         String?
+  logoUrl       String?
+  invoicePrefix String   @default("INV-")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Customers & ledger
+// ---------------------------------------------------------------------------
+
+model Customer {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  phone          String?
+  email          String?
+  address        String?
+  openingBalance Decimal  @default(0) @db.Decimal(12, 2)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invoices      Invoice[]
+  payments      Payment[]
+  ledgerEntries CustomerLedgerEntry[]
+
+  @@index([name])
+  @@index([phone])
+}
+
+model CustomerLedgerEntry {
+  id           String          @id @default(uuid()) @db.Uuid
+  customerId   String          @db.Uuid
+  customer     Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  type         LedgerEntryType
+  amount       Decimal         @db.Decimal(12, 2)
+  balanceAfter Decimal         @db.Decimal(12, 2)
+  invoiceId    String?         @db.Uuid
+  invoice      Invoice?        @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  paymentId    String?         @db.Uuid
+  payment      Payment?        @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  date         DateTime
+  notes        String?
+  createdAt    DateTime        @default(now())
+
+  @@index([customerId, date])
+  @@index([invoiceId])
+  @@index([paymentId])
+}
+
+// ---------------------------------------------------------------------------
+// Products & inventory
+// ---------------------------------------------------------------------------
+
+model Product {
+  id            String      @id @default(uuid()) @db.Uuid
+  name          String
+  sku           String      @unique
+  unit          ProductUnit
+  sellingPrice  Decimal     @db.Decimal(12, 2)
+  minStockLevel Int         @default(0)
+  currentStock  Decimal     @default(0) @db.Decimal(12, 3)
+  active        Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  invoiceItems   InvoiceItem[]
+  stockMovements StockMovement[]
+
+  @@index([name])
+}
+
+model StockMovement {
+  id           String            @id @default(uuid()) @db.Uuid
+  productId    String            @db.Uuid
+  product      Product           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  type         StockMovementType
+  quantity     Decimal           @db.Decimal(12, 3)
+  balanceAfter Decimal           @db.Decimal(12, 3)
+  invoiceId    String?           @db.Uuid
+  invoice      Invoice?          @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  reason       String?
+  notes        String?
+  date         DateTime
+  createdAt    DateTime          @default(now())
+
+  @@index([productId, date])
+  @@index([invoiceId])
+}
+
+// ---------------------------------------------------------------------------
+// Sales
+// ---------------------------------------------------------------------------
+
+model Invoice {
+  id            String        @id @default(uuid()) @db.Uuid
+  invoiceNumber String        @unique
+  customerId    String        @db.Uuid
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  date          DateTime
+  subtotal      Decimal       @db.Decimal(12, 2)
+  discountTotal Decimal       @default(0) @db.Decimal(12, 2)
+  total         Decimal       @db.Decimal(12, 2)
+  amountPaid    Decimal       @default(0) @db.Decimal(12, 2)
+  status        InvoiceStatus @default(UNPAID)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  items          InvoiceItem[]
+  discounts      InvoiceDiscount[]
+  payments       Payment[]
+  stockMovements StockMovement[]
+  ledgerEntries  CustomerLedgerEntry[]
+
+  @@index([customerId])
+  @@index([date])
+}
+
+model InvoiceItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  invoiceId String   @db.Uuid
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  productId String   @db.Uuid
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Decimal  @db.Decimal(12, 3)
+  unitPrice Decimal  @db.Decimal(12, 2)
+  lineTotal Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
+  @@index([productId])
+}
+
+model InvoiceDiscount {
+  id          String   @id @default(uuid()) @db.Uuid
+  invoiceId   String   @db.Uuid
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  description String?
+  amount      Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+
+  @@index([invoiceId])
+}
+
+// ---------------------------------------------------------------------------
+// Payments
+// ---------------------------------------------------------------------------
+
+model Payment {
+  id         String      @id @default(uuid()) @db.Uuid
+  customerId String      @db.Uuid
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  invoiceId  String?     @db.Uuid
+  invoice    Invoice?    @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  amount     Decimal     @db.Decimal(12, 2)
+  mode       PaymentMode
+  reference  String?
+  notes      String?
+  date       DateTime
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  ledgerEntries CustomerLedgerEntry[]
+
+  @@index([customerId])
+  @@index([invoiceId])
+  @@index([date])
 }

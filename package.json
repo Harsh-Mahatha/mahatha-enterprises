@@ -12,12 +12,12 @@
     "build": "npm run build:packages && npm run build -w apps/web && npm run build -w apps/api",
     "lint": "npm run lint -w apps/web && npm run lint -w apps/api",
     "typecheck": "npm run typecheck -w apps/web && npm run typecheck -w apps/api && npm run typecheck -w packages/types && npm run typecheck -w packages/validation",
-    "db:generate": "prisma generate --schema=prisma/schema.prisma",
-    "db:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
-    "db:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio --schema=prisma/schema.prisma",
-    "db:reset": "prisma migrate reset --schema=prisma/schema.prisma"
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",
@@ -30,5 +30,8 @@
     "esbuild@0.28.2": true,
     "prisma@7.10.0": true,
     "unrs-resolver@1.12.2": true
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
   }
 }

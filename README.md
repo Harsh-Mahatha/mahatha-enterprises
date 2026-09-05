@@ -25,6 +25,7 @@ mahatha-enterprises/
 │   ├── schema.prisma
 │   ├── migrations/
 │   └── seed.ts
+├── prisma.config.ts     Prisma 7 config (schema path, migrations, datasource)
 └── package.json         Workspace root
 ```
 
@@ -54,6 +55,18 @@ Never commit a real `.env` file.
 1. Make sure PostgreSQL is running and `DATABASE_URL` in `.env` points to it.
 2. Run migrations: `npm run db:migrate`
 3. Seed development data: `npm run db:seed`
+
+Prisma 7 reads connection/schema/migration config from `prisma.config.ts` at
+the repo root rather than from `schema.prisma`. `apps/api` connects at
+runtime through `@prisma/adapter-pg` (see `apps/api/src/config/prisma.ts`) —
+a driver adapter is required in Prisma 7, there is no default connection
+string handling in the generated client.
+
+Seeding (`npm run db:seed`) resets and repopulates: a `Mahatha Enterprises`
+`CompanySettings` row, three customers (ABC Traders, XYZ Distributors, Rahul
+Kumar) with opening-balance ledger entries, and three products (Product A/B/C)
+with initial stock movements — Product C is seeded at its minimum stock level
+to exercise the low-stock case.
 
 ## Prisma commands
 
