@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mahatha Enterprises
 
-## Getting Started
+In-house invoicing, customer ledger, sales, and stock management application.
 
-First, run the development server:
+See [`Mahatha_Enterprises_V1_Claude_Code_Prompt.md`](../Mahatha_Enterprises_V1_Claude_Code_Prompt.md) for the full V1 product scope and build plan.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Tech stack
+
+- **Frontend** — Next.js (App Router), React, TypeScript, Tailwind CSS
+- **Backend** — Node.js, Express, TypeScript
+- **Database** — PostgreSQL
+- **ORM** — Prisma
+
+## Repository structure
+
+```text
+mahatha-enterprises/
+├── apps/
+│   ├── web/          Next.js frontend
+│   └── api/           Express backend
+├── packages/
+│   ├── types/          Shared TypeScript types
+│   └── validation/     Shared Zod validation schemas
+├── prisma/
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── seed.ts
+└── package.json         Workspace root
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This is an npm workspaces monorepo. Run workspace-scoped scripts with `npm run <script> -w <workspace>` (e.g. `npm run dev -w apps/api`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env` and fill in real values:
 
-## Learn More
+```bash
+cp .env.example .env
+```
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Used by | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | apps/api, prisma | PostgreSQL connection string |
+| `PORT` | apps/api | Port the Express server listens on (default `4000`) |
+| `NODE_ENV` | apps/api | `development` / `production` |
+| `AUTH_SECRET` | apps/api | Secret used for session/token signing |
+| `WEB_ORIGIN` | apps/api | Frontend origin allowed by CORS |
+| `NEXT_PUBLIC_API_URL` | apps/web | Base URL the frontend uses to call the API |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Never commit a real `.env` file.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Database setup
 
-## Deploy on Vercel
+1. Make sure PostgreSQL is running and `DATABASE_URL` in `.env` points to it.
+2. Run migrations: `npm run db:migrate`
+3. Seed development data: `npm run db:seed`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Prisma commands
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Purpose |
+| --- | --- |
+| `npm run db:generate` | Regenerate the Prisma client |
+| `npm run db:migrate` | Create and apply a dev migration |
+| `npm run db:deploy` | Apply existing migrations (production) |
+| `npm run db:seed` | Run the seed script |
+| `npm run db:studio` | Open Prisma Studio |
+| `npm run db:reset` | Drop, recreate, migrate, and reseed the dev database |
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+`npm run dev` builds the shared packages once, then starts the Next.js frontend and the Express backend concurrently:
+
+- Frontend — http://localhost:3000
+- Backend — http://localhost:4000
+
+## Build
+
+```bash
+npm run build
+```
+
+## Lint & typecheck
+
+```bash
+npm run lint
+npm run typecheck
+```
