@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 // apps/api is always run with its own directory as cwd (npm workspace scripts,
 // or `cd apps/api && npm run dev`), so the repo-root .env is two levels up.
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
+dotenv.config({ path: path.resolve(process.cwd(), "../../.env"), quiet: true });
 
 function readEnv(name: string, fallback?: string): string {
   const value = process.env[name] ?? fallback;
