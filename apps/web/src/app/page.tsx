@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
-// Temporary entry point. Phase 3 replaces this with real auth-based routing
-// (redirect to /login when signed out, /dashboard when signed in).
+// proxy.ts already sends signed-out requests to /login, so by the time this
+// renders the visitor is authenticated. Redirects to /style-guide as a
+// placeholder until Phase 12 builds the real Dashboard.
 export default function RootPage() {
   redirect("/style-guide");
 }

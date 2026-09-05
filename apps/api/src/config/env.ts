@@ -17,6 +17,5 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(readEnv("PORT", "4000")),
   databaseUrl: readEnv("DATABASE_URL"),
-  authSecret: readEnv("AUTH_SECRET"),
   webOrigin: readEnv("WEB_ORIGIN", "http://localhost:3000"),
 };

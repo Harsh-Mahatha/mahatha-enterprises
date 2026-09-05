@@ -8,10 +8,10 @@
   ],
   "scripts": {
     "dev": "npm run build:packages && concurrently -k -n web,api -c blue,green \"npm run dev -w apps/web\" \"npm run dev -w apps/api\"",
-    "build:packages": "npm run build -w packages/types -w packages/validation",
+    "build:packages": "npm run build -w packages/types -w packages/validation -w packages/config",
     "build": "npm run build:packages && npm run build -w apps/web && npm run build -w apps/api",
     "lint": "npm run lint -w apps/web && npm run lint -w apps/api",
-    "typecheck": "npm run typecheck -w apps/web && npm run typecheck -w apps/api && npm run typecheck -w packages/types && npm run typecheck -w packages/validation",
+    "typecheck": "npm run typecheck -w apps/web && npm run typecheck -w apps/api && npm run typecheck -w packages/types && npm run typecheck -w packages/validation && npm run typecheck -w packages/config",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

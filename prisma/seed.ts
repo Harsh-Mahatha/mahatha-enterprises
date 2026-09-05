@@ -1,12 +1,18 @@
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+const DEV_ADMIN_EMAIL = "admin@mahathaenterprises.example";
+const DEV_ADMIN_PASSWORD = "password123";
+
 async function main() {
   // Dev-only reset so this script is safe to re-run (FK-safe delete order).
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.customerLedgerEntry.deleteMany();
   await prisma.stockMovement.deleteMany();
   await prisma.invoiceDiscount.deleteMany();
@@ -24,6 +30,14 @@ async function main() {
       phone: "+91 98765 43210",
       email: "accounts@mahathaenterprises.example",
       invoicePrefix: "INV-",
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      name: "Admin",
+      email: DEV_ADMIN_EMAIL,
+      passwordHash: await bcrypt.hash(DEV_ADMIN_PASSWORD, 12),
     },
   });
 
@@ -86,6 +100,7 @@ async function main() {
   }
 
   console.log("Seed complete.");
+  console.log(`Dev login: ${DEV_ADMIN_EMAIL} / ${DEV_ADMIN_PASSWORD}`);
 }
 
 main()

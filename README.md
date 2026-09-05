@@ -20,7 +20,8 @@ mahatha-enterprises/
 │   └── api/           Express backend
 ├── packages/
 │   ├── types/          Shared TypeScript types
-│   └── validation/     Shared Zod validation schemas
+│   ├── validation/     Shared Zod validation schemas
+│   └── config/         Shared runtime constants (e.g. session cookie name)
 ├── prisma/
 │   ├── schema.prisma
 │   ├── migrations/
@@ -44,7 +45,6 @@ cp .env.example .env
 | `DATABASE_URL` | apps/api, prisma | PostgreSQL connection string |
 | `PORT` | apps/api | Port the Express server listens on (default `4000`) |
 | `NODE_ENV` | apps/api | `development` / `production` |
-| `AUTH_SECRET` | apps/api | Secret used for session/token signing |
 | `WEB_ORIGIN` | apps/api | Frontend origin allowed by CORS |
 | `NEXT_PUBLIC_API_URL` | apps/web | Base URL the frontend uses to call the API |
 
@@ -67,6 +67,19 @@ Seeding (`npm run db:seed`) resets and repopulates: a `Mahatha Enterprises`
 Kumar) with opening-balance ledger entries, and three products (Product A/B/C)
 with initial stock movements — Product C is seeded at its minimum stock level
 to exercise the low-stock case.
+
+## Authentication
+
+Sessions are opaque, random tokens stored server-side (`Session` table),
+issued as an httpOnly `mahatha_session` cookie — not JWTs, so logout and
+"invalidate other sessions on password change" are simple DB deletes rather
+than needing a blocklist. `apps/web/src/proxy.ts` performs a cheap
+cookie-presence check to redirect signed-out visitors to `/login`; the
+Express `requireAuth` middleware is the actual authority on every API
+request.
+
+Seeded dev login: `admin@mahathaenterprises.example` / `password123` (see
+`npm run db:seed` output).
 
 ## Prisma commands
 
