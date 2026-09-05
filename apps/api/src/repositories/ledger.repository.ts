@@ -18,3 +18,27 @@ export function createLedgerEntry(
 ) {
   return client.customerLedgerEntry.create({ data });
 }
+
+export function findLatestLedgerEntry(customerId: string, client: Client = prisma) {
+  return client.customerLedgerEntry.findFirst({
+    where: { customerId },
+    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+  });
+}
+
+export function findLedgerEntries(
+  params: { customerId: string; skip: number; take: number },
+  client: Client = prisma,
+) {
+  const where: Prisma.CustomerLedgerEntryWhereInput = { customerId: params.customerId };
+
+  return Promise.all([
+    client.customerLedgerEntry.findMany({
+      where,
+      orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+      skip: params.skip,
+      take: params.take,
+    }),
+    client.customerLedgerEntry.count({ where }),
+  ]);
+}

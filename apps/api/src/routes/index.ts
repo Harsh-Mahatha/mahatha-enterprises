@@ -3,6 +3,7 @@ import { authRouter } from "./auth.routes";
 import { customerRouter } from "./customer.routes";
 import { healthRouter } from "./health";
 import { inventoryRouter } from "./inventory.routes";
+import { paymentRouter } from "./payment.routes";
 import { productRouter } from "./product.routes";
 import { settingsRouter } from "./settings.routes";
 
@@ -14,3 +15,4 @@ apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/customers", customerRouter);
 apiRouter.use("/products", productRouter);
 apiRouter.use("/inventory", inventoryRouter);
+apiRouter.use("/payments", paymentRouter);

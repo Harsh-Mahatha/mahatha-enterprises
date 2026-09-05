@@ -1,4 +1,14 @@
-import { LayoutDashboard, Users, Package, Boxes, Receipt, BarChart3, Settings, type LucideIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Package,
+  Boxes,
+  Receipt,
+  Wallet,
+  BarChart3,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -12,6 +22,7 @@ export const navItems: NavItem[] = [
   { label: "Products", href: "/products", icon: Package },
   { label: "Inventory", href: "/inventory", icon: Boxes },
   { label: "Invoices", href: "/invoices", icon: Receipt },
+  { label: "Payments", href: "/payments", icon: Wallet },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

@@ -4,3 +4,5 @@ export * as settingsService from "./settings";
 export * as customerService from "./customers";
 export * as productService from "./products";
 export * as inventoryService from "./inventory";
+export * as paymentService from "./payments";
+export * as ledgerService from "./ledger";
