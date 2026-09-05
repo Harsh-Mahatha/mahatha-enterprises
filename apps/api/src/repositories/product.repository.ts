@@ -28,6 +28,12 @@ export function findProductById(id: string, client: Client = prisma) {
   return client.product.findUnique({ where: { id } });
 }
 
+// Unpaginated — used by the Stock Report, which lists every active product's
+// current stock in one view rather than paging through them.
+export function findAllActiveProducts(client: Client = prisma) {
+  return client.product.findMany({ where: { active: true }, orderBy: { name: "asc" } });
+}
+
 export type ProductWriteData = {
   name: string;
   sku: string;

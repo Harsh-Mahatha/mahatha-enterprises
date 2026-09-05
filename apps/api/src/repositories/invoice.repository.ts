@@ -51,19 +51,26 @@ export function findInvoiceById(id: string, client: Client = prisma) {
   return client.invoice.findUnique({ where: { id }, include: invoiceInclude });
 }
 
-export function findInvoices(
-  params: {
-    search?: string;
-    customerId?: string;
-    status?: InvoiceStatus;
-    skip: number;
-    take: number;
-  },
-  client: Client = prisma,
-) {
-  const where: Prisma.InvoiceWhereInput = {
+export type InvoiceFilterParams = {
+  search?: string;
+  customerId?: string;
+  status?: InvoiceStatus;
+  dateFrom?: Date;
+  dateTo?: Date;
+};
+
+function buildInvoiceWhere(params: InvoiceFilterParams): Prisma.InvoiceWhereInput {
+  return {
     ...(params.customerId ? { customerId: params.customerId } : {}),
     ...(params.status ? { status: params.status } : {}),
+    ...(params.dateFrom || params.dateTo
+      ? {
+          date: {
+            ...(params.dateFrom ? { gte: params.dateFrom } : {}),
+            ...(params.dateTo ? { lte: params.dateTo } : {}),
+          },
+        }
+      : {}),
     ...(params.search
       ? {
           OR: [
@@ -73,6 +80,13 @@ export function findInvoices(
         }
       : {}),
   };
+}
+
+export function findInvoices(
+  params: InvoiceFilterParams & { skip: number; take: number },
+  client: Client = prisma,
+) {
+  const where = buildInvoiceWhere(params);
 
   return Promise.all([
     client.invoice.findMany({
@@ -84,4 +98,12 @@ export function findInvoices(
     }),
     client.invoice.count({ where }),
   ]);
+}
+
+// Aggregates over the full filtered set (not just the current page) — used
+// by the Sales Report summary, built on the same where-clause as the list
+// above so the two never drift apart.
+export function aggregateInvoices(params: InvoiceFilterParams, client: Client = prisma) {
+  const where = buildInvoiceWhere(params);
+  return client.invoice.aggregate({ where, _sum: { total: true, amountPaid: true } });
 }

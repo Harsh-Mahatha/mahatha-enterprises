@@ -42,6 +42,18 @@ export function calculateInvoice(input: InvoiceCalculationInput): InvoiceCalcula
   };
 }
 
+// Outstanding for an already-saved invoice (as opposed to the live
+// calculateInvoice() used while building one). Same "one canonical place"
+// principle — every page that shows an invoice's outstanding amount derives
+// it from here rather than re-subtracting amountPaid from total locally.
+export function getInvoiceOutstanding(invoice: {
+  total: number | string;
+  amountPaid: number | string;
+}): string {
+  const outstanding = new Decimal(invoice.total).minus(invoice.amountPaid);
+  return Decimal.max(0, outstanding).toFixed(2);
+}
+
 export type InvoiceCalculationIssue = {
   field: "discounts" | "paymentReceived";
   message: string;

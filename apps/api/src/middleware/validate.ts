@@ -28,3 +28,17 @@ export function validateQuery<T>(schema: ZodType<T>) {
     next();
   };
 }
+
+// Route params (e.g. :id) are UUID-typed columns in Postgres; a malformed
+// value would otherwise reach Prisma and surface as a raw P2007 error. This
+// rejects it cleanly at the boundary instead.
+export function validateParams<T>(schema: ZodType<T>) {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.params);
+    if (!result.success) {
+      next(new AppError(result.error.issues[0]?.message ?? "Invalid request.", 400, "VALIDATION_ERROR"));
+      return;
+    }
+    next();
+  };
+}

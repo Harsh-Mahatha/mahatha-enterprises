@@ -4,6 +4,18 @@ In-house invoicing, customer ledger, sales, and stock management application.
 
 See [`Mahatha_Enterprises_V1_Claude_Code_Prompt.md`](../Mahatha_Enterprises_V1_Claude_Code_Prompt.md) for the full V1 product scope and build plan.
 
+## Features (V1)
+
+- **Authentication** — login, logout, change password (server-side sessions, not JWT)
+- **Company settings** — business details used on invoices
+- **Customers** — CRUD, deactivation, opening balances
+- **Customer ledger** — opening balance, invoice, and payment entries with a running balance
+- **Payments** — record full/partial payments, payment history
+- **Products & inventory** — product CRUD, stock entry, stock adjustment, stock movement history, low-stock indicator
+- **Sales invoices** — line items, multiple discount lines, partial/full payment at time of sale, atomic stock + ledger updates, printable invoice
+- **Dashboard** — today's sales, outstanding, customer count, low stock, today's invoices, recent invoices
+- **Reports** — sales (date/customer filterable), outstanding, stock, stock movements
+
 ## Tech stack
 
 - **Frontend** — Next.js (App Router), React, TypeScript, Tailwind CSS
@@ -21,7 +33,8 @@ mahatha-enterprises/
 ├── packages/
 │   ├── types/          Shared TypeScript types
 │   ├── validation/     Shared Zod validation schemas
-│   └── config/         Shared runtime constants (e.g. session cookie name)
+│   ├── config/         Shared runtime constants (e.g. session cookie name)
+│   └── calculations/   Canonical invoice/stock calculations (used by UI + API)
 ├── prisma/
 │   ├── schema.prisma
 │   ├── migrations/

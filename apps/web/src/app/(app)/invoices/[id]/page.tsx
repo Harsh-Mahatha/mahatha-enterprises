@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { Printer } from "lucide-react";
+import { getInvoiceOutstanding } from "@mahatha/calculations";
 import type { InvoiceStatus } from "@mahatha/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -49,7 +51,8 @@ export default function InvoiceDetailPage() {
     return <ErrorState description="Could not load this invoice." onRetry={() => refetch()} />;
   }
 
-  const outstanding = Math.max(0, Number(invoice.total) - Number(invoice.amountPaid));
+  const outstandingStr = getInvoiceOutstanding(invoice);
+  const outstanding = Number(outstandingStr);
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,6 +61,12 @@ export default function InvoiceDetailPage() {
         description={invoice.customer ? `Billed to ${invoice.customer.name}` : undefined}
         actions={
           <>
+            <Button variant="outline" asChild>
+              <Link href={`/invoices/${invoice.id}/print`}>
+                <Printer />
+                Print
+              </Link>
+            </Button>
             {outstanding > 0 ? (
               <Button variant="outline" asChild>
                 <Link href={`/payments/new?customerId=${invoice.customerId}`}>Record payment</Link>
@@ -123,7 +132,7 @@ export default function InvoiceDetailPage() {
           subtotal={invoice.subtotal}
           discountTotal={invoice.discountTotal}
           total={invoice.total}
-          outstanding={String(outstanding)}
+          outstanding={outstandingStr}
         />
       </div>
     </div>

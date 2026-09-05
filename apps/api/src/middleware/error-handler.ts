@@ -57,6 +57,12 @@ function fromPrismaError(err: Prisma.PrismaClientKnownRequestError): AppError | 
   if (err.code === "P2025") {
     return new AppError("Record not found.", 404, "NOT_FOUND");
   }
+  if (err.code === "P2007") {
+    // Malformed input reaching a @db.Uuid (or similar) column — the route's
+    // own validateParams/validateBody should catch this first; this is a
+    // defensive fallback so it still surfaces as 400, not a raw 500.
+    return new AppError("Invalid request.", 400, "VALIDATION_ERROR");
+  }
   return null;
 }
 

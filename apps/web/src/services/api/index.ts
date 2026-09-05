@@ -7,3 +7,5 @@ export * as inventoryService from "./inventory";
 export * as paymentService from "./payments";
 export * as ledgerService from "./ledger";
 export * as invoiceService from "./invoices";
+export * as dashboardService from "./dashboard";
+export * as reportsService from "./reports";

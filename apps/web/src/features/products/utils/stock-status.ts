@@ -1,8 +1,10 @@
+import { isLowStock } from "@mahatha/calculations";
+
 export type StockStatus = "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
 
 export function getStockStatus(currentStock: number, minStockLevel: number): StockStatus {
   if (currentStock <= 0) return "OUT_OF_STOCK";
-  if (currentStock <= minStockLevel) return "LOW_STOCK";
+  if (isLowStock(currentStock, minStockLevel)) return "LOW_STOCK";
   return "IN_STOCK";
 }
 

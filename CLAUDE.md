@@ -8,6 +8,8 @@ Business management app (invoicing, customer ledger, sales, stock). See `Mahatha
 - `apps/api` — Express + TypeScript backend. Layering: route → middleware → controller → service → repository/Prisma.
 - `packages/types` — shared TypeScript domain/API types, built with `tsc` (consumed as compiled JS + `.d.ts`, not raw TS).
 - `packages/validation` — shared Zod schemas, same build model as `packages/types`.
+- `packages/config` — shared runtime constants used by both apps (e.g. the session cookie name).
+- `packages/calculations` — the canonical invoice calculation (`calculateInvoice`, `getInvoiceOutstanding`) and stock-status rule (`isLowStock`); both `apps/web` and `apps/api` import from here rather than reimplementing.
 - `prisma/` — single Prisma schema and migrations for the whole app (used by `apps/api`).
 
 ## Conventions

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { FormField } from "@/components/forms/FormField";
+import { Modal, ModalContent, ModalDescription, ModalFooter, ModalHeader, ModalTitle } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CustomerSelect } from "@/features/customers";
 import {
@@ -40,6 +41,7 @@ export default function NewInvoicePage() {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("CASH");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [savedInvoiceId, setSavedInvoiceId] = useState<string | null>(null);
 
   const calculation = useMemo(
     () =>
@@ -76,7 +78,7 @@ export default function NewInvoicePage() {
         notes: notes || undefined,
       }),
     onSuccess: (invoice) => {
-      router.push(`/invoices/${invoice.id}`);
+      setSavedInvoiceId(invoice.id);
     },
     onError: (err) => {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -156,6 +158,28 @@ export default function NewInvoicePage() {
           Save invoice
         </Button>
       </div>
+
+      <Modal
+        open={savedInvoiceId !== null}
+        onOpenChange={(open) => {
+          if (!open && savedInvoiceId) {
+            router.push(`/invoices/${savedInvoiceId}`);
+          }
+        }}
+      >
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Invoice saved successfully.</ModalTitle>
+            <ModalDescription>Print invoice now?</ModalDescription>
+          </ModalHeader>
+          <ModalFooter>
+            <Button variant="outline" onClick={() => router.push(`/invoices/${savedInvoiceId}`)}>
+              No
+            </Button>
+            <Button onClick={() => router.push(`/invoices/${savedInvoiceId}/print`)}>Print</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

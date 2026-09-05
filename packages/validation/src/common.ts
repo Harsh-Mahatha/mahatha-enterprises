@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+/** Validates a route's `:id` param is a UUID before it ever reaches Prisma. */
+export const idParamSchema = z.object({
+  id: z.string().uuid("Invalid id."),
+});
+export type IdParam = z.infer<typeof idParamSchema>;
+
 /** Optional single-line text: an empty string is treated as "not provided". */
 export function optionalText(maxLength = 255) {
   return z

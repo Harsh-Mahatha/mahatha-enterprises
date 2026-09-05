@@ -126,7 +126,7 @@ model CustomerLedgerEntry {
   notes        String?
   createdAt    DateTime        @default(now())
 
-  @@index([customerId, date])
+  @@index([customerId, createdAt])
   @@index([invoiceId])
   @@index([paymentId])
 }

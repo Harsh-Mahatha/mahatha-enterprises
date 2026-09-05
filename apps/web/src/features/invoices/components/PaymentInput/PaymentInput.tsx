@@ -4,13 +4,7 @@ import type { PaymentMode } from "@mahatha/types";
 import { FormField } from "@/components/forms/FormField";
 import { Input } from "@/components/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
-
-const modeOptions: { value: PaymentMode; label: string }[] = [
-  { value: "CASH", label: "Cash" },
-  { value: "UPI", label: "UPI" },
-  { value: "BANK", label: "Bank" },
-  { value: "OTHER", label: "Other" },
-];
+import { paymentModeOptions } from "@/constants/payment-modes";
 
 export type PaymentInputProps = {
   amount: string;
@@ -38,7 +32,7 @@ export function PaymentInput({ amount, mode, onAmountChange, onModeChange }: Pay
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {modeOptions.map((option) => (
+            {paymentModeOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>

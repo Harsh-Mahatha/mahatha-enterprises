@@ -4,3 +4,4 @@ export * from "./DiscountLine";
 export * from "./InvoiceSummary";
 export * from "./PaymentInput";
 export * from "./InvoiceTable";
+export * from "./PrintableInvoice";

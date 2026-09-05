@@ -6,14 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormField } from "@/components/forms/FormField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
-
-const unitOptions: { value: ProductUnit; label: string }[] = [
-  { value: "PIECE", label: "Piece" },
-  { value: "BOX", label: "Box" },
-  { value: "KG", label: "Kg" },
-  { value: "LITRE", label: "Litre" },
-  { value: "METER", label: "Meter" },
-];
+import { productUnitOptions } from "@/constants/product-units";
 
 export type ProductFormValues = {
   name: string;
@@ -74,7 +67,7 @@ export function ProductForm({ product, onSubmit, onCancel, submitting = false, e
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {unitOptions.map((option) => (
+              {productUnitOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

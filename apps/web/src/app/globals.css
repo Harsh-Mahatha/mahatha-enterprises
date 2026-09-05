@@ -112,3 +112,18 @@ body {
 * {
   border-color: var(--border);
 }
+
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  /* Printed output is always black-on-white, regardless of the viewer's
+     light/dark preference — PrintableInvoice sets its own colors explicitly,
+     this is just a safety net against anything else leaking through. */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+}

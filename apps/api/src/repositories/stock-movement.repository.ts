@@ -19,10 +19,20 @@ export function createStockMovement(data: StockMovementWriteData, client: Client
 }
 
 export function findStockMovements(
-  params: { productId?: string; skip: number; take: number },
+  params: { productId?: string; dateFrom?: Date; dateTo?: Date; skip: number; take: number },
   client: Client = prisma,
 ) {
-  const where: Prisma.StockMovementWhereInput = params.productId ? { productId: params.productId } : {};
+  const where: Prisma.StockMovementWhereInput = {
+    ...(params.productId ? { productId: params.productId } : {}),
+    ...(params.dateFrom || params.dateTo
+      ? {
+          date: {
+            ...(params.dateFrom ? { gte: params.dateFrom } : {}),
+            ...(params.dateTo ? { lte: params.dateTo } : {}),
+          },
+        }
+      : {}),
+  };
 
   return Promise.all([
     client.stockMovement.findMany({

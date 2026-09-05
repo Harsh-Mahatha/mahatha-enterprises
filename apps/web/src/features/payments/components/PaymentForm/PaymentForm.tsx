@@ -8,13 +8,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { FormField } from "@/components/forms/FormField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { CustomerSelect } from "@/features/customers/components/CustomerSelect";
-
-const modeOptions: { value: PaymentMode; label: string }[] = [
-  { value: "CASH", label: "Cash" },
-  { value: "UPI", label: "UPI" },
-  { value: "BANK", label: "Bank" },
-  { value: "OTHER", label: "Other" },
-];
+import { paymentModeOptions } from "@/constants/payment-modes";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -88,7 +82,7 @@ export function PaymentForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {modeOptions.map((option) => (
+              {paymentModeOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

@@ -28,6 +28,12 @@ export function findCustomerById(id: string, client: Client = prisma) {
   return client.customer.findUnique({ where: { id } });
 }
 
+// Unpaginated — used by the Outstanding Report, which needs every customer's
+// balance to filter/sort by, not one page of them.
+export function findAllCustomers(client: Client = prisma) {
+  return client.customer.findMany({ orderBy: { name: "asc" } });
+}
+
 export function createCustomer(
   data: {
     name: string;

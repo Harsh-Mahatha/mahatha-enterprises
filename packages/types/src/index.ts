@@ -7,3 +7,5 @@ export * from "./stock-movement";
 export * from "./payment";
 export * from "./ledger";
 export * from "./invoice";
+export * from "./dashboard";
+export * from "./reports";
