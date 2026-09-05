@@ -20,3 +20,4 @@ export * from "./CurrencyDisplay";
 export * from "./DateDisplay";
 export * from "./Separator";
 export * from "./ConfirmDialog";
+export * from "./DescriptionItem";

@@ -38,3 +38,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   return payload.data;
 }
+
+export function buildQuery(params: Record<string, string | number | boolean | undefined>): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  }
+  const query = searchParams.toString();
+  return query ? `?${query}` : "";
+}
