@@ -26,8 +26,13 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function logout(req: Request, res: Response) {
-  if (req.sessionToken) {
-    await authService.logout(req.sessionToken);
+  // Deliberately does not require requireAuth: a stale/expired cookie must
+  // still be clearable, otherwise proxy.ts's presence-only check keeps
+  // treating the browser as signed in and bounces it straight back out of
+  // /login, looping forever.
+  const token: string | undefined = req.cookies?.[SESSION_COOKIE_NAME];
+  if (token) {
+    await authService.logout(token);
   }
   res.clearCookie(SESSION_COOKIE_NAME, { path: "/" });
 

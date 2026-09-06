@@ -7,6 +7,6 @@ import { validateBody } from "../middleware/validate";
 export const authRouter = Router();
 
 authRouter.post("/login", validateBody(loginSchema), authController.login);
-authRouter.post("/logout", requireAuth, authController.logout);
+authRouter.post("/logout", authController.logout);
 authRouter.get("/me", requireAuth, authController.me);
 authRouter.post("/change-password", requireAuth, validateBody(changePasswordSchema), authController.changePassword);

@@ -16,6 +16,9 @@ export class ApiError extends Error {
 type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;
+  /** Set by the auth "who am I" check — that call is expected to 401 for a
+   * signed-out visitor, so it must not trigger the redirect below. */
+  skipAuthRedirect?: boolean;
 };
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -29,11 +32,30 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const payload = (await response.json().catch(() => null)) as ApiResponse<T> | null;
 
   if (!payload || !payload.success) {
-    throw new ApiError(
-      payload && !payload.success ? payload.message : "Something went wrong.",
-      payload && !payload.success ? payload.code : "UNKNOWN_ERROR",
-      response.status,
-    );
+    const code = payload && !payload.success ? payload.code : "UNKNOWN_ERROR";
+    const message = payload && !payload.success ? payload.message : "Something went wrong.";
+
+    // A session that's expired or been invalidated server-side (e.g. after a
+    // password change elsewhere) leaves a stale cookie that looks present to
+    // proxy.ts's optimistic check but fails every real request. Bounce to
+    // /login instead of letting every widget on the page fail silently.
+    if (code === "UNAUTHENTICATED" && !options.skipAuthRedirect && typeof window !== "undefined") {
+      // The cookie is httpOnly, so it can't be cleared from here directly —
+      // without this, the stale cookie survives the navigation and
+      // proxy.ts's presence-only check bounces /login straight back into the
+      // app, which 401s again, looping forever. Clear it server-side first,
+      // then hard-navigate (not router.push: this is a plain utility
+      // function with no access to the router, and a full reload guarantees
+      // no stale client-side state/query cache survives into the login page).
+      fetch(`${API_URL}/api/auth/logout`, { method: "POST", credentials: "include" })
+        .catch(() => {})
+        .finally(() => {
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = "/login";
+        });
+    }
+
+    throw new ApiError(message, code, response.status);
   }
 
   return payload.data;

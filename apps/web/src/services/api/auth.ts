@@ -13,7 +13,7 @@ export function logout() {
 }
 
 export function getMe() {
-  return apiRequest<{ user: AuthUser }>("/api/auth/me");
+  return apiRequest<{ user: AuthUser }>("/api/auth/me", { skipAuthRedirect: true });
 }
 
 export function changePassword(currentPassword: string, newPassword: string) {
