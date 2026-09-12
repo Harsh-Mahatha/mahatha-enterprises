@@ -69,10 +69,18 @@ export async function createInvoice(input: CreateInvoiceInput) {
       throw new AppError("Cannot bill an inactive customer.", 400, "CUSTOMER_INACTIVE");
     }
 
-    // Verify every line has sufficient stock before writing anything.
-    const products = new Map<string, Awaited<ReturnType<typeof productRepository.findProductById>>>();
+    // Verify every line has sufficient stock before writing anything. Fetched
+    // in one round trip rather than one-per-item — this transaction already
+    // makes many sequential queries against a remote database, and every
+    // extra round trip adds to how long it holds locks on the product rows
+    // (and how likely it is to blow past the interactive transaction timeout).
+    const productList = await productRepository.findProductsByIds(
+      input.items.map((item) => item.productId),
+      tx,
+    );
+    const products = new Map(productList.map((product) => [product.id, product]));
     for (const item of input.items) {
-      const product = await productRepository.findProductById(item.productId, tx);
+      const product = products.get(item.productId);
       if (!product) {
         throw new AppError("One of the selected products could not be found.", 404, "NOT_FOUND");
       }
@@ -82,7 +90,6 @@ export async function createInvoice(input: CreateInvoiceInput) {
       if (Number(product.currentStock) < item.quantity) {
         throw new AppError(`Insufficient stock for ${product.name}.`, 400, "INSUFFICIENT_STOCK");
       }
-      products.set(item.productId, product);
     }
 
     // Sequential, race-free invoice numbering (INV-000001, ...).
@@ -196,6 +203,14 @@ export async function createInvoice(input: CreateInvoiceInput) {
     }
 
     return invoice.id;
+  }, {
+    // The default 5s interactive-transaction timeout is tight for this
+    // transaction: it's a remote (cross-region) database and this does one
+    // round trip per invoice item plus customer/counter/payment/ledger
+    // lookups, so it can run long even without contention — and any lock
+    // wait on a product row (e.g. a concurrent stock entry) adds on top.
+    maxWait: 10000,
+    timeout: 15000,
   });
 
   return invoiceRepository.findInvoiceById(invoiceId);

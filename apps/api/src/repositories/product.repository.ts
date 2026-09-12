@@ -28,6 +28,10 @@ export function findProductById(id: string, client: Client = prisma) {
   return client.product.findUnique({ where: { id } });
 }
 
+export function findProductsByIds(ids: string[], client: Client = prisma) {
+  return client.product.findMany({ where: { id: { in: ids } } });
+}
+
 // Unpaginated — used by the Stock Report, which lists every active product's
 // current stock in one view rather than paging through them.
 export function findAllActiveProducts(client: Client = prisma) {

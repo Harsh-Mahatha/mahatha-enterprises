@@ -27,9 +27,9 @@ async function main() {
   await prisma.companySettings.create({
     data: {
       businessName: "Mahatha Enterprises",
-      address: "12 Industrial Estate Road, Coimbatore, Tamil Nadu",
-      phone: "+91 98765 43210",
-      email: "accounts@mahathaenterprises.example",
+      address: "H-17/348, Sangam Vihar, New Delhi - 110080",
+      phone: "8748945421",
+      email: "shrutimehta1847@gmail.com",
       invoicePrefix: "INV-",
     },
   });

@@ -115,7 +115,7 @@ body {
 
 @media print {
   @page {
-    margin: 1.5cm;
+    margin: 0.75cm;
   }
 
   /* Printed output is always black-on-white, regardless of the viewer's
@@ -125,5 +125,13 @@ body {
   body {
     background: #ffffff !important;
     color: #000000 !important;
+  }
+
+  /* Each invoice page-block (see PrintableInvoice) is capped to roughly half
+     an A4 page's printable height. Overflow items move to their own block
+     instead of growing this one taller, so each block gets its own sheet. */
+  .invoice-page-block + .invoice-page-block {
+    break-before: page;
+    page-break-before: always;
   }
 }

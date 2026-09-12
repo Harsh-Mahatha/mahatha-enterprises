@@ -1,7 +1,7 @@
 import { productUnitValues } from "@mahatha/validation";
 import type { ProductUnit } from "@mahatha/types";
 
-const labels: Record<ProductUnit, string> = {
+export const productUnitLabels: Record<ProductUnit, string> = {
   PIECE: "Piece",
   BOX: "Box",
   KG: "Kg",
@@ -11,5 +11,5 @@ const labels: Record<ProductUnit, string> = {
 
 export const productUnitOptions: { value: ProductUnit; label: string }[] = productUnitValues.map((value) => ({
   value,
-  label: labels[value],
+  label: productUnitLabels[value],
 }));

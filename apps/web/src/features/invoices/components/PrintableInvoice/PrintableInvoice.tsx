@@ -1,66 +1,113 @@
-import type { CompanySettings, Invoice } from "@mahatha/types";
+import type { CompanySettings, Invoice, InvoiceItem, InvoiceStatus } from "@mahatha/types";
 import { getInvoiceOutstanding } from "@mahatha/calculations";
-import { formatCurrency, formatDate } from "@/utils/format";
+import { productUnitLabels } from "@/constants/product-units";
+import { formatAmountInWords, formatCurrency, formatDate } from "@/utils/format";
 
 export type PrintableInvoiceProps = {
   invoice: Invoice;
   companySettings: CompanySettings;
 };
 
+const STATUS_LABELS: Record<InvoiceStatus, string> = {
+  PAID: "Paid",
+  PARTIAL: "Partially Paid",
+  UNPAID: "Unpaid",
+};
+
+// Kept low enough that a page (header + this many rows + totals/signature on
+// the last one) stays within roughly half an A4 page — see globals.css for
+// the matching @page margin and the page-break rule between blocks.
+const ITEMS_PER_PAGE = 12;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  if (items.length === 0) return [[]];
+  const pages: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    pages.push(items.slice(i, i + size));
+  }
+  return pages;
+}
+
 // A dedicated, self-contained print layout — deliberately not composed from
 // the app's themed UI atoms. It must render the same black-on-white way
 // regardless of the viewer's light/dark preference, since that's what ends
-// up on paper.
+// up on paper. Modelled on a bordered, tabular invoice format (boxed header,
+// ruled item table, boxed totals) rather than the app's usual card style.
+//
+// Long item lists are paginated rather than left to grow the box taller:
+// each page-block repeats the header/customer details and holds up to
+// ITEMS_PER_PAGE rows, with totals/amount-in-words/signature only on the
+// last one.
 export function PrintableInvoice({ invoice, companySettings }: PrintableInvoiceProps) {
   const outstanding = Number(getInvoiceOutstanding(invoice));
+  const pages = chunk(invoice.items ?? [], ITEMS_PER_PAGE);
 
   return (
-    <div className="bg-white text-black">
-      <InvoiceHeader companySettings={companySettings} invoice={invoice} />
-      <CustomerDetails invoice={invoice} />
-      <InvoiceItems invoice={invoice} />
-      <DiscountSummary invoice={invoice} />
-      <div className="mt-6 flex justify-end">
-        <div className="w-64">
-          <InvoiceTotals invoice={invoice} />
-          <PaymentSummary invoice={invoice} outstanding={outstanding} />
-        </div>
-      </div>
-      {invoice.notes ? (
-        <div className="mt-8 border-t border-gray-300 pt-4 text-sm">
-          <p className="font-medium">Notes</p>
-          <p className="text-gray-700">{invoice.notes}</p>
-        </div>
-      ) : null}
-      <InvoiceFooter />
-    </div>
+    <>
+      {pages.map((pageItems, pageIndex) => {
+        const isLastPage = pageIndex === pages.length - 1;
+        return (
+          <div
+            key={pageIndex}
+            className="invoice-page-block mb-6 border border-black bg-white text-xs text-black last:mb-0"
+          >
+            <InvoiceHeader companySettings={companySettings} invoice={invoice} />
+            <CustomerDetails invoice={invoice} />
+            <InvoiceItems items={pageItems} startIndex={pageIndex * ITEMS_PER_PAGE} />
+            {isLastPage ? (
+              <>
+                <InvoiceSummary invoice={invoice} outstanding={outstanding} />
+                {invoice.notes ? (
+                  <div className="border-b border-black px-2 py-1">
+                    <span className="font-semibold">Notes: </span>
+                    {invoice.notes}
+                  </div>
+                ) : null}
+                <SignatureBlock />
+              </>
+            ) : (
+              <p className="border-b border-black px-2 py-1 italic text-gray-600">Continued on next page…</p>
+            )}
+          </div>
+        );
+      })}
+    </>
   );
 }
 
 function InvoiceHeader({ companySettings, invoice }: { companySettings: CompanySettings; invoice: Invoice }) {
   return (
-    <div className="flex items-start justify-between border-b border-gray-300 pb-6">
-      <div>
+    <div className="flex items-stretch justify-between border-b border-black">
+      <div className="flex-1 p-2">
         {companySettings.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- print output, not a routed app page
           <img
             src={companySettings.logoUrl}
             alt={companySettings.businessName}
-            className="mb-2 h-12 object-contain"
+            className="mb-1 h-8 object-contain"
           />
         ) : null}
-        <p className="text-lg font-semibold">{companySettings.businessName}</p>
-        {companySettings.address ? <p className="text-sm text-gray-700">{companySettings.address}</p> : null}
+        <p className="text-lg font-bold uppercase tracking-wide">{companySettings.businessName}</p>
+        {companySettings.address ? <p className="mt-0.5">{companySettings.address}</p> : null}
         {companySettings.phone || companySettings.email ? (
-          <p className="text-sm text-gray-700">
-            {[companySettings.phone, companySettings.email].filter(Boolean).join(" · ")}
+          <p>
+            {[
+              companySettings.phone ? `Tel: ${companySettings.phone}` : null,
+              companySettings.email ? `Email: ${companySettings.email}` : null,
+            ]
+              .filter(Boolean)
+              .join("  |  ")}
           </p>
         ) : null}
       </div>
-      <div className="text-right">
-        <p className="text-xl font-bold tracking-wide">INVOICE</p>
-        <p className="text-sm text-gray-700">{invoice.invoiceNumber}</p>
-        <p className="text-sm text-gray-700">{formatDate(invoice.date)}</p>
+      <div className="w-48 shrink-0 border-l border-black p-2 text-right">
+        <p className="text-lg font-bold tracking-wide">INVOICE</p>
+        <p className="mt-1">
+          Invoice No : <span className="font-semibold">{invoice.invoiceNumber}</span>
+        </p>
+        <p>
+          Date : <span className="font-semibold">{formatDate(invoice.date)}</span>
+        </p>
       </div>
     </div>
   );
@@ -68,33 +115,58 @@ function InvoiceHeader({ companySettings, invoice }: { companySettings: CompanyS
 
 function CustomerDetails({ invoice }: { invoice: Invoice }) {
   return (
-    <div className="mt-6">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Billed to</p>
-      <p className="font-medium">{invoice.customer?.name ?? "—"}</p>
-      {invoice.customer?.address ? <p className="text-sm text-gray-700">{invoice.customer.address}</p> : null}
-      {invoice.customer?.phone ? <p className="text-sm text-gray-700">{invoice.customer.phone}</p> : null}
+    <div className="flex items-stretch justify-between border-b border-black">
+      <div className="flex-1 p-2">
+        <p>
+          <span className="font-semibold">Billed to : </span>
+          {invoice.customer?.name ?? "—"}
+        </p>
+        {invoice.customer?.address ? (
+          <p>
+            <span className="font-semibold">Address : </span>
+            {invoice.customer.address}
+          </p>
+        ) : null}
+        {invoice.customer?.phone ? <p>{invoice.customer.phone}</p> : null}
+      </div>
+      <div className="w-48 shrink-0 border-l border-black p-2 text-right">
+        <p>
+          <span className="font-semibold">Status : </span>
+          {STATUS_LABELS[invoice.status]}
+        </p>
+      </div>
     </div>
   );
 }
 
-function InvoiceItems({ invoice }: { invoice: Invoice }) {
+function InvoiceItems({ items, startIndex }: { items: InvoiceItem[]; startIndex: number }) {
   return (
-    <table className="mt-6 w-full border-collapse text-sm">
+    <table className="w-full border-collapse">
       <thead>
-        <tr className="border-b border-gray-400 text-left">
-          <th className="py-2 font-medium">Product</th>
-          <th className="py-2 text-right font-medium">Qty</th>
-          <th className="py-2 text-right font-medium">Rate</th>
-          <th className="py-2 text-right font-medium">Amount</th>
+        <tr className="bg-gray-100">
+          <th className="border-b border-black px-1.5 py-1 text-left font-medium">S.No</th>
+          <th className="border-b border-black px-1.5 py-1 text-left font-medium">Goods / Services supplied</th>
+          <th className="border-b border-black px-1.5 py-1 text-right font-medium">Qty.</th>
+          <th className="border-b border-black px-1.5 py-1 text-left font-medium">Unit</th>
+          <th className="border-b border-black px-1.5 py-1 text-right font-medium">Rate (₹)</th>
+          <th className="border-b border-black px-1.5 py-1 text-right font-medium">Amount (₹)</th>
         </tr>
       </thead>
       <tbody>
-        {(invoice.items ?? []).map((item) => (
-          <tr key={item.id} className="border-b border-gray-200">
-            <td className="py-2">{item.product?.name ?? "—"}</td>
-            <td className="py-2 text-right">{item.quantity}</td>
-            <td className="py-2 text-right">{formatCurrency(Number(item.unitPrice))}</td>
-            <td className="py-2 text-right">{formatCurrency(Number(item.lineTotal))}</td>
+        {items.map((item, index) => (
+          <tr key={item.id}>
+            <td className="border-b border-gray-300 px-1.5 py-0.5">{startIndex + index + 1}</td>
+            <td className="border-b border-gray-300 px-1.5 py-0.5">{item.product?.name ?? "—"}</td>
+            <td className="border-b border-gray-300 px-1.5 py-0.5 text-right">{item.quantity}</td>
+            <td className="border-b border-gray-300 px-1.5 py-0.5">
+              {item.product?.unit ? productUnitLabels[item.product.unit] : "—"}
+            </td>
+            <td className="border-b border-gray-300 px-1.5 py-0.5 text-right">
+              {formatCurrency(Number(item.unitPrice))}
+            </td>
+            <td className="border-b border-gray-300 px-1.5 py-0.5 text-right">
+              {formatCurrency(Number(item.lineTotal))}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -102,65 +174,53 @@ function InvoiceItems({ invoice }: { invoice: Invoice }) {
   );
 }
 
-function DiscountSummary({ invoice }: { invoice: Invoice }) {
+function InvoiceSummary({ invoice, outstanding }: { invoice: Invoice; outstanding: number }) {
   const discounts = invoice.discounts ?? [];
-  if (discounts.length === 0) {
-    return null;
-  }
 
   return (
-    <div className="mt-4 text-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Discounts</p>
-      {discounts.map((discount) => (
-        <div key={discount.id} className="flex justify-between py-0.5">
-          <span className="text-gray-700">{discount.description || "Discount"}</span>
-          <span>-{formatCurrency(Number(discount.amount))}</span>
+    <div className="flex items-stretch justify-between border-b border-black">
+      <div className="flex-1 p-2">
+        <p>
+          <span className="font-semibold">Amount in words : </span>
+          {formatAmountInWords(Number(invoice.total))}
+        </p>
+        {discounts.length > 0 ? (
+          <div className="mt-1">
+            <p className="font-semibold">Discounts</p>
+            {discounts.map((discount) => (
+              <div key={discount.id} className="flex justify-between gap-4">
+                <span>{discount.description || "Discount"}</span>
+                <span>-{formatCurrency(Number(discount.amount))}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <div className="w-48 shrink-0 border-l border-black">
+        <div className="flex justify-between border-b border-gray-300 px-1.5 py-1">
+          <span className="font-semibold">Grand Total</span>
+          <span className="font-semibold">{formatCurrency(Number(invoice.total))}</span>
         </div>
-      ))}
-    </div>
-  );
-}
-
-function InvoiceTotals({ invoice }: { invoice: Invoice }) {
-  return (
-    <div className="text-sm">
-      <div className="flex justify-between py-1">
-        <span className="text-gray-600">Subtotal</span>
-        <span>{formatCurrency(Number(invoice.subtotal))}</span>
-      </div>
-      {Number(invoice.discountTotal) > 0 ? (
-        <div className="flex justify-between py-1">
-          <span className="text-gray-600">Discount</span>
-          <span>-{formatCurrency(Number(invoice.discountTotal))}</span>
+        <div className="flex justify-between border-b border-gray-300 px-1.5 py-1">
+          <span>Payment Received</span>
+          <span>{formatCurrency(Number(invoice.amountPaid))}</span>
         </div>
-      ) : null}
-      <div className="flex justify-between border-t border-gray-400 py-1 text-base font-semibold">
-        <span>Total</span>
-        <span>{formatCurrency(Number(invoice.total))}</span>
+        <div className="flex justify-between bg-gray-100 px-1.5 py-1">
+          <span className="font-semibold">Outstanding</span>
+          <span className="font-semibold">{formatCurrency(outstanding)}</span>
+        </div>
       </div>
     </div>
   );
 }
 
-function PaymentSummary({ invoice, outstanding }: { invoice: Invoice; outstanding: number }) {
+function SignatureBlock() {
   return (
-    <div className="mt-2 text-sm">
-      <div className="flex justify-between py-1">
-        <span className="text-gray-600">Payment received</span>
-        <span>{formatCurrency(Number(invoice.amountPaid))}</span>
+    <div className="flex items-end justify-between p-2 pt-6">
+      <p>Receiver&apos;s Signature</p>
+      <div className="text-right">
+        <p className="w-36 border-t border-black pt-0.5">Authorised Signatory</p>
       </div>
-      <div className="flex justify-between border-t border-gray-400 py-1 font-semibold">
-        <span>Outstanding</span>
-        <span>{formatCurrency(outstanding)}</span>
-      </div>
-    </div>
-  );
-}
-
-function InvoiceFooter() {
-  return (
-    <div className="mt-10 border-t border-gray-300 pt-4 text-center text-xs text-gray-500">
-      <p>Thank you for your business.</p>
     </div>
   );
 }
