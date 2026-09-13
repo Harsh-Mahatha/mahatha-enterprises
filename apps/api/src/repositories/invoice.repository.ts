@@ -51,6 +51,30 @@ export function findInvoiceById(id: string, client: Client = prisma) {
   return client.invoice.findUnique({ where: { id }, include: invoiceInclude });
 }
 
+export type InvoiceUpdateData = {
+  date: Date;
+  subtotal: number;
+  discountTotal: number;
+  total: number;
+  status: InvoiceStatus;
+  notes: string | null;
+};
+
+export function updateInvoice(id: string, data: InvoiceUpdateData, client: Client = prisma) {
+  return client.invoice.update({ where: { id }, data });
+}
+
+// Line items and discounts aren't an audit trail the way stock movements and
+// ledger entries are — on edit they're simply replaced (delete + recreate)
+// rather than reconciled row by row.
+export function deleteInvoiceItems(invoiceId: string, client: Client = prisma) {
+  return client.invoiceItem.deleteMany({ where: { invoiceId } });
+}
+
+export function deleteInvoiceDiscounts(invoiceId: string, client: Client = prisma) {
+  return client.invoiceDiscount.deleteMany({ where: { invoiceId } });
+}
+
 export type InvoiceFilterParams = {
   search?: string;
   customerId?: string;

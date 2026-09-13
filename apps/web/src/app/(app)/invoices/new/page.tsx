@@ -27,15 +27,21 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const DEFAULT_LINE_COUNT = 3;
+
 function emptyLine(): InvoiceLineValue {
   return { key: crypto.randomUUID(), productId: "", quantity: "1", unitPrice: "" };
+}
+
+function defaultLines(): InvoiceLineValue[] {
+  return Array.from({ length: DEFAULT_LINE_COUNT }, emptyLine);
 }
 
 export default function NewInvoicePage() {
   const router = useRouter();
   const [customerId, setCustomerId] = useState("");
   const [date, setDate] = useState(today());
-  const [items, setItems] = useState<InvoiceLineValue[]>([emptyLine()]);
+  const [items, setItems] = useState<InvoiceLineValue[]>(defaultLines);
   const [discounts, setDiscounts] = useState<DiscountLineValue[]>([]);
   const [paymentReceived, setPaymentReceived] = useState("0");
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("CASH");

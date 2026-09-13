@@ -42,7 +42,7 @@ export function InvoiceLine({ value, lineTotal, onChange, onRemove, removable }:
   return (
     <TableRow>
       <TableCell className="min-w-[220px]">
-        <ProductSelect value={value.productId} onValueChange={handleProductChange} />
+        <ProductSelect value={value.productId} onValueChange={handleProductChange} fieldNav />
       </TableCell>
       <TableCell className="w-28">
         <Input
@@ -51,6 +51,7 @@ export function InvoiceLine({ value, lineTotal, onChange, onRemove, removable }:
           min="0"
           value={value.quantity}
           onChange={(event) => onChange({ ...value, quantity: event.target.value })}
+          data-invoice-nav="true"
         />
       </TableCell>
       <TableCell className="w-32">
@@ -60,6 +61,7 @@ export function InvoiceLine({ value, lineTotal, onChange, onRemove, removable }:
           min="0"
           value={value.unitPrice}
           onChange={(event) => onChange({ ...value, unitPrice: event.target.value })}
+          data-invoice-nav="true"
         />
       </TableCell>
       <TableCell className="w-32 text-right">

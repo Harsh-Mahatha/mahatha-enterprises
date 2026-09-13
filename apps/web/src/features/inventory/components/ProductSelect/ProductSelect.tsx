@@ -14,9 +14,11 @@ export type ProductSelectProps = {
   onValueChange: (value: string) => void;
   /** When set, adds a clearable "all products" option with this label. */
   allowAllLabel?: string;
+  /** Marks the trigger as a stop for the invoice items table's Enter-to-next-field navigation. */
+  fieldNav?: boolean;
 };
 
-export function ProductSelect({ id, value, onValueChange, allowAllLabel }: ProductSelectProps) {
+export function ProductSelect({ id, value, onValueChange, allowAllLabel, fieldNav }: ProductSelectProps) {
   const { data } = useQuery({
     queryKey: ["products", "select-options"],
     queryFn: () => productService.listProducts({ pageSize: 100 }),
@@ -29,7 +31,7 @@ export function ProductSelect({ id, value, onValueChange, allowAllLabel }: Produ
       value={value || (allowAllLabel ? ALL_VALUE : value)}
       onValueChange={(next) => onValueChange(next === ALL_VALUE ? "" : next)}
     >
-      <SelectTrigger id={id}>
+      <SelectTrigger id={id} data-invoice-nav={fieldNav ? "true" : undefined}>
         <SelectValue placeholder="Select a product" />
       </SelectTrigger>
       <SelectContent>

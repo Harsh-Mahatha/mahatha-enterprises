@@ -1,4 +1,4 @@
-import type { CreateInvoiceInput, Invoice, InvoiceStatus, PaginatedData } from "@mahatha/types";
+import type { CreateInvoiceInput, Invoice, InvoiceStatus, PaginatedData, UpdateInvoiceInput } from "@mahatha/types";
 import { apiRequest, buildQuery } from "./client";
 
 export type ListInvoicesParams = {
@@ -19,4 +19,8 @@ export function getInvoice(id: string) {
 
 export function createInvoice(input: CreateInvoiceInput) {
   return apiRequest<Invoice>("/api/invoices", { method: "POST", body: input });
+}
+
+export function updateInvoice(id: string, input: UpdateInvoiceInput) {
+  return apiRequest<Invoice>(`/api/invoices/${id}`, { method: "PATCH", body: input });
 }

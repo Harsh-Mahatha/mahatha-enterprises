@@ -61,3 +61,10 @@ export type CreateInvoiceInput = {
   paymentMode?: PaymentMode;
   notes?: string;
 };
+
+export type UpdateInvoiceInput = {
+  date: string;
+  items: CreateInvoiceItemInput[];
+  discounts: CreateInvoiceDiscountInput[];
+  notes?: string;
+};

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Printer } from "lucide-react";
+import { Pencil, Printer } from "lucide-react";
 import { getInvoiceOutstanding } from "@mahatha/calculations";
 import type { InvoiceStatus } from "@mahatha/types";
 import { Badge } from "@/components/ui/Badge";
@@ -61,6 +61,12 @@ export default function InvoiceDetailPage() {
         description={invoice.customer ? `Billed to ${invoice.customer.name}` : undefined}
         actions={
           <>
+            <Button variant="outline" asChild>
+              <Link href={`/invoices/${invoice.id}/edit`}>
+                <Pencil />
+                Edit
+              </Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link href={`/invoices/${invoice.id}/print`}>
                 <Printer />

@@ -1,4 +1,4 @@
-import type { CreateInvoiceInput, ListInvoicesQuery } from "@mahatha/validation";
+import type { CreateInvoiceInput, ListInvoicesQuery, UpdateInvoiceInput } from "@mahatha/validation";
 import { calculateInvoice, validateInvoiceCalculation } from "@mahatha/calculations";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middleware/error-handler";
@@ -214,4 +214,154 @@ export async function createInvoice(input: CreateInvoiceInput) {
   });
 
   return invoiceRepository.findInvoiceById(invoiceId);
+}
+
+export async function updateInvoice(id: string, input: UpdateInvoiceInput) {
+  const existing = await invoiceRepository.findInvoiceById(id);
+  if (!existing) {
+    throw new AppError("Invoice not found.", 404, "NOT_FOUND");
+  }
+
+  // Payments aren't edited here, so they're held fixed and re-validated
+  // against the new total the same way createInvoice validates them against
+  // the original one.
+  const amountPaid = Number(existing.amountPaid);
+
+  const calculation = calculateInvoice({
+    items: input.items,
+    discounts: input.discounts,
+    paymentReceived: amountPaid,
+  });
+
+  const issues = validateInvoiceCalculation(calculation);
+  if (issues.length > 0) {
+    throw new AppError(issues[0].message, 400, "INVALID_INVOICE_CALCULATION");
+  }
+
+  await prisma.$transaction(
+    async (tx) => {
+      const productList = await productRepository.findProductsByIds(
+        input.items.map((item) => item.productId),
+        tx,
+      );
+      const products = new Map(productList.map((product) => [product.id, product]));
+      for (const item of input.items) {
+        const product = products.get(item.productId);
+        if (!product) {
+          throw new AppError("One of the selected products could not be found.", 404, "NOT_FOUND");
+        }
+        if (!product.active) {
+          throw new AppError(`${product.name} is inactive and cannot be sold.`, 400, "PRODUCT_INACTIVE");
+        }
+      }
+
+      // Only the net change per product needs to move — stock and its audit
+      // trail (StockMovement) are adjusted by the delta between the old and
+      // new quantities rather than reversing and reapplying in full.
+      const oldQtyByProduct = new Map<string, number>();
+      for (const item of existing.items ?? []) {
+        oldQtyByProduct.set(item.productId, (oldQtyByProduct.get(item.productId) ?? 0) + Number(item.quantity));
+      }
+      const newQtyByProduct = new Map<string, number>();
+      for (const item of input.items) {
+        newQtyByProduct.set(item.productId, (newQtyByProduct.get(item.productId) ?? 0) + item.quantity);
+      }
+      const affectedProductIds = new Set([...oldQtyByProduct.keys(), ...newQtyByProduct.keys()]);
+
+      for (const productId of affectedProductIds) {
+        const delta = (newQtyByProduct.get(productId) ?? 0) - (oldQtyByProduct.get(productId) ?? 0);
+        if (delta === 0) continue;
+
+        const product = products.get(productId) ?? (await productRepository.findProductById(productId, tx));
+        if (!product) {
+          throw new AppError("One of the previously invoiced products could not be found.", 404, "NOT_FOUND");
+        }
+        if (delta > 0 && Number(product.currentStock) < delta) {
+          throw new AppError(`Insufficient stock for ${product.name}.`, 400, "INSUFFICIENT_STOCK");
+        }
+
+        const updatedProduct = await productRepository.adjustCurrentStock(productId, -delta, tx);
+        await stockMovementRepository.createStockMovement(
+          {
+            productId,
+            type: "ADJUSTMENT",
+            quantity: -delta,
+            balanceAfter: Number(updatedProduct.currentStock),
+            invoiceId: id,
+            reason: "Invoice edited",
+            date: input.date,
+          },
+          tx,
+        );
+      }
+
+      await invoiceRepository.deleteInvoiceItems(id, tx);
+      await invoiceRepository.deleteInvoiceDiscounts(id, tx);
+
+      for (let index = 0; index < input.items.length; index += 1) {
+        const item = input.items[index];
+        await invoiceRepository.createInvoiceItem(
+          {
+            invoiceId: id,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            lineTotal: Number(calculation.lineTotals[index]),
+          },
+          tx,
+        );
+      }
+
+      for (const discount of input.discounts) {
+        await invoiceRepository.createInvoiceDiscount(
+          { invoiceId: id, description: discount.description, amount: discount.amount },
+          tx,
+        );
+      }
+
+      const total = Number(calculation.total);
+      const status = computeInvoiceStatus(total, amountPaid);
+
+      await invoiceRepository.updateInvoice(
+        id,
+        {
+          date: input.date,
+          subtotal: Number(calculation.subtotal),
+          discountTotal: Number(calculation.discountTotal),
+          total,
+          status,
+          notes: input.notes ?? null,
+        },
+        tx,
+      );
+
+      // The ledger is append-only (see ledger.repository.ts) — a total that
+      // changes on edit is recorded as one more INVOICE entry for the
+      // difference, never by rewriting the original entry or recomputing
+      // every later balanceAfter in the chain.
+      const totalDelta = total - Number(existing.total);
+      if (totalDelta !== 0) {
+        const lastEntry = await ledgerRepository.findLatestLedgerEntry(existing.customerId, tx);
+        const runningBalance = (lastEntry ? Number(lastEntry.balanceAfter) : 0) + totalDelta;
+        await ledgerRepository.createLedgerEntry(
+          {
+            customerId: existing.customerId,
+            type: "INVOICE",
+            amount: totalDelta,
+            balanceAfter: runningBalance,
+            invoiceId: id,
+            date: input.date,
+            notes: "Invoice edited",
+          },
+          tx,
+        );
+      }
+    },
+    {
+      maxWait: 10000,
+      timeout: 15000,
+    },
+  );
+
+  return invoiceRepository.findInvoiceById(id);
 }

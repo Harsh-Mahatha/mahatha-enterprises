@@ -32,6 +32,19 @@ export const createInvoiceSchema = z
   });
 export type CreateInvoiceInput = z.infer<typeof createInvoiceSchema>;
 
+// Editing an invoice never touches customer or payment fields — those are
+// handled by dedicated flows (payments are their own ledger-affecting
+// entity, and reassigning a customer would require re-chaining two
+// customers' ledger balances). Only the line items, discounts, date, and
+// notes can be revised here.
+export const updateInvoiceSchema = z.object({
+  date: z.coerce.date(),
+  items: z.array(invoiceItemInputSchema).min(1, "Add at least one item."),
+  discounts: z.array(invoiceDiscountInputSchema).default([]),
+  notes: optionalText(1000),
+});
+export type UpdateInvoiceInput = z.infer<typeof updateInvoiceSchema>;
+
 export const invoiceStatusValues = ["PAID", "PARTIAL", "UNPAID"] as const;
 export const invoiceStatusSchema = z.enum(invoiceStatusValues);
 

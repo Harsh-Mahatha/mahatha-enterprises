@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { CreateInvoiceInput, ListInvoicesQuery } from "@mahatha/validation";
+import type { CreateInvoiceInput, ListInvoicesQuery, UpdateInvoiceInput } from "@mahatha/validation";
 import * as invoiceService from "../services/invoice.service";
 
 type IdParams = { id: string };
@@ -19,4 +19,10 @@ export async function createInvoice(req: Request, res: Response) {
   const input = req.body as CreateInvoiceInput;
   const invoice = await invoiceService.createInvoice(input);
   res.status(201).json({ success: true, data: invoice });
+}
+
+export async function updateInvoice(req: Request<IdParams>, res: Response) {
+  const input = req.body as UpdateInvoiceInput;
+  const invoice = await invoiceService.updateInvoice(req.params.id, input);
+  res.json({ success: true, data: invoice });
 }
