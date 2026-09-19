@@ -43,8 +43,8 @@ export default function ProductDetailPage() {
     mutationFn: (values: ProductFormValues) =>
       productService.updateProduct(productId, {
         name: values.name,
-        sku: values.sku,
         unit: values.unit,
+        mrp: Number(values.mrp),
         sellingPrice: Number(values.sellingPrice),
         minStockLevel: Number(values.minStockLevel || 0),
       }),

@@ -1,4 +1,5 @@
 import type { CreateProductInput, ListProductsQuery, UpdateProductInput } from "@mahatha/validation";
+import { prisma } from "../config/prisma";
 import { AppError } from "../middleware/error-handler";
 import * as productRepository from "../repositories/product.repository";
 
@@ -30,12 +31,26 @@ export async function getProduct(id: string) {
 }
 
 export async function createProduct(input: CreateProductInput) {
-  return productRepository.createProduct({
-    name: input.name,
-    sku: input.sku,
-    unit: input.unit,
-    sellingPrice: input.sellingPrice,
-    minStockLevel: input.minStockLevel,
+  // Sequential, race-free SKU generation (SKU-000001, ...) in the same
+  // transaction as the insert, so a failed create doesn't burn a number.
+  return prisma.$transaction(async (tx) => {
+    const counter = await tx.skuCounter.upsert({
+      where: { id: "singleton" },
+      create: { id: "singleton", value: 1 },
+      update: { value: { increment: 1 } },
+    });
+
+    return productRepository.createProduct(
+      {
+        name: input.name,
+        sku: `SKU-${String(counter.value).padStart(6, "0")}`,
+        unit: input.unit,
+        mrp: input.mrp,
+        sellingPrice: input.sellingPrice,
+        minStockLevel: input.minStockLevel,
+      },
+      tx,
+    );
   });
 }
 
@@ -43,8 +58,8 @@ export async function updateProduct(id: string, input: UpdateProductInput) {
   await getProduct(id);
   return productRepository.updateProduct(id, {
     name: input.name,
-    sku: input.sku,
     unit: input.unit,
+    mrp: input.mrp,
     sellingPrice: input.sellingPrice,
     minStockLevel: input.minStockLevel,
   });

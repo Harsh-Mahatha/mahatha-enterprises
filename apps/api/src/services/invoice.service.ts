@@ -127,6 +127,7 @@ export async function createInvoice(input: CreateInvoiceInput) {
           invoiceId: invoice.id,
           productId: item.productId,
           quantity: item.quantity,
+          mrp: Number(product.mrp),
           unitPrice: item.unitPrice,
           lineTotal: Number(calculation.lineTotals[index]),
         },
@@ -295,6 +296,14 @@ export async function updateInvoice(id: string, input: UpdateInvoiceInput) {
         );
       }
 
+      // Lines are recreated on edit, but a product that was already on the
+      // invoice keeps the MRP it was sold with; only newly added products pick
+      // up the current one.
+      const existingMrpByProduct = new Map<string, number>();
+      for (const item of existing.items ?? []) {
+        existingMrpByProduct.set(item.productId, Number(item.mrp));
+      }
+
       await invoiceRepository.deleteInvoiceItems(id, tx);
       await invoiceRepository.deleteInvoiceDiscounts(id, tx);
 
@@ -305,6 +314,7 @@ export async function updateInvoice(id: string, input: UpdateInvoiceInput) {
             invoiceId: id,
             productId: item.productId,
             quantity: item.quantity,
+            mrp: existingMrpByProduct.get(item.productId) ?? Number(products.get(item.productId)!.mrp),
             unitPrice: item.unitPrice,
             lineTotal: Number(calculation.lineTotals[index]),
           },

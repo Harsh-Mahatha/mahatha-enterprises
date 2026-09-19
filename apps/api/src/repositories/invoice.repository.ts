@@ -29,6 +29,7 @@ export type InvoiceItemCreateData = {
   invoiceId: string;
   productId: string;
   quantity: number;
+  mrp: number;
   unitPrice: number;
   lineTotal: number;
 };

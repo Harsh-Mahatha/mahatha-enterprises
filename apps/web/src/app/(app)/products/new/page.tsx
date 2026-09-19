@@ -16,8 +16,8 @@ export default function NewProductPage() {
     mutationFn: (values: ProductFormValues) =>
       productService.createProduct({
         name: values.name,
-        sku: values.sku,
         unit: values.unit,
+        mrp: Number(values.mrp),
         sellingPrice: Number(values.sellingPrice),
         minStockLevel: Number(values.minStockLevel || 0),
       }),

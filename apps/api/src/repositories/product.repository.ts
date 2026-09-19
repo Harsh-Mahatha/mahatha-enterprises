@@ -38,19 +38,23 @@ export function findAllActiveProducts(client: Client = prisma) {
   return client.product.findMany({ where: { active: true }, orderBy: { name: "asc" } });
 }
 
-export type ProductWriteData = {
+export type ProductUpdateData = {
   name: string;
-  sku: string;
   unit: ProductUnit;
+  mrp: number;
   sellingPrice: number;
   minStockLevel: number;
 };
 
-export function createProduct(data: ProductWriteData, client: Client = prisma) {
+export type ProductCreateData = ProductUpdateData & { sku: string };
+
+export function createProduct(data: ProductCreateData, client: Client = prisma) {
   return client.product.create({ data });
 }
 
-export function updateProduct(id: string, data: ProductWriteData, client: Client = prisma) {
+// The SKU is generated once at creation and never edited, so it's not part of
+// the update data.
+export function updateProduct(id: string, data: ProductUpdateData, client: Client = prisma) {
   return client.product.update({ where: { id }, data });
 }
 

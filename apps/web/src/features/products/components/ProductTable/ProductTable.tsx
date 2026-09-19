@@ -17,6 +17,12 @@ const columns: DataTableColumn<Product>[] = [
   { id: "sku", header: "SKU", cell: (row) => row.sku },
   { id: "unit", header: "Unit", cell: (row) => row.unit },
   {
+    id: "mrp",
+    header: "MRP",
+    cell: (row) => <CurrencyDisplay value={Number(row.mrp)} />,
+    className: "text-right",
+  },
+  {
     id: "sellingPrice",
     header: "Selling price",
     cell: (row) => <CurrencyDisplay value={Number(row.sellingPrice)} />,

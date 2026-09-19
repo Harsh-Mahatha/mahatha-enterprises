@@ -9,8 +9,8 @@ export type ListProductsParams = {
 
 export type ProductInput = {
   name: string;
-  sku: string;
   unit: ProductUnit;
+  mrp: number;
   sellingPrice: number;
   minStockLevel: number;
 };

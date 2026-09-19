@@ -17,6 +17,9 @@ export function ProductSummary({ product }: ProductSummaryProps) {
       <CardContent className="grid gap-4 pt-6 sm:grid-cols-2">
         <DescriptionItem label="SKU">{product.sku}</DescriptionItem>
         <DescriptionItem label="Unit">{product.unit}</DescriptionItem>
+        <DescriptionItem label="MRP">
+          <CurrencyDisplay value={Number(product.mrp)} />
+        </DescriptionItem>
         <DescriptionItem label="Selling price">
           <CurrencyDisplay value={Number(product.sellingPrice)} />
         </DescriptionItem>

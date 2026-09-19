@@ -71,9 +71,9 @@ async function main() {
   }
 
   const productSeeds = [
-    { name: "Product A", sku: "PROD-A", unit: "PIECE" as const, sellingPrice: 1000, minStockLevel: 10, stock: 100 },
-    { name: "Product B", sku: "PROD-B", unit: "PIECE" as const, sellingPrice: 500, minStockLevel: 10, stock: 150 },
-    { name: "Product C", sku: "PROD-C", unit: "PIECE" as const, sellingPrice: 250, minStockLevel: 10, stock: 5 },
+    { name: "Product A", sku: "PROD-A", unit: "PIECE" as const, mrp: 1100, sellingPrice: 1000, minStockLevel: 10, stock: 100 },
+    { name: "Product B", sku: "PROD-B", unit: "PIECE" as const, mrp: 550, sellingPrice: 500, minStockLevel: 10, stock: 150 },
+    { name: "Product C", sku: "PROD-C", unit: "PIECE" as const, mrp: 275, sellingPrice: 250, minStockLevel: 10, stock: 5 },
   ];
 
   for (const seed of productSeeds) {
@@ -82,6 +82,7 @@ async function main() {
         name: seed.name,
         sku: seed.sku,
         unit: seed.unit,
+        mrp: seed.mrp,
         sellingPrice: seed.sellingPrice,
         minStockLevel: seed.minStockLevel,
         currentStock: seed.stock,

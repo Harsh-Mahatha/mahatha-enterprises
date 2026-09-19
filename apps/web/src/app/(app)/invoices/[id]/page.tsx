@@ -111,6 +111,7 @@ export default function InvoiceDetailPage() {
             <TableRow>
               <TableHead>Product</TableHead>
               <TableHead>Quantity</TableHead>
+              <TableHead className="text-right">MRP</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="text-right">Total</TableHead>
             </TableRow>
@@ -120,6 +121,9 @@ export default function InvoiceDetailPage() {
               <TableRow key={item.id}>
                 <TableCell>{item.product?.name ?? "—"}</TableCell>
                 <TableCell>{item.quantity}</TableCell>
+                <TableCell className="text-right">
+                  <CurrencyDisplay value={Number(item.mrp)} />
+                </TableCell>
                 <TableCell className="text-right">
                   <CurrencyDisplay value={Number(item.unitPrice)} />
                 </TableCell>

@@ -5,6 +5,7 @@ export type Product = {
   name: string;
   sku: string;
   unit: ProductUnit;
+  mrp: string;
   sellingPrice: string;
   minStockLevel: number;
   currentStock: string;

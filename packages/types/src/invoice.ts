@@ -10,6 +10,7 @@ export type InvoiceItem = {
   productId: string;
   product?: Product;
   quantity: string;
+  mrp: string;
   unitPrice: string;
   lineTotal: string;
   createdAt: string;

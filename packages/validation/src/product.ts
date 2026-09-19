@@ -6,8 +6,8 @@ export const productUnitSchema = z.enum(productUnitValues);
 
 export const createProductSchema = z.object({
   name: z.string().trim().min(1, "Name is required.").max(200),
-  sku: z.string().trim().min(1, "SKU is required.").max(50),
   unit: productUnitSchema,
+  mrp: z.coerce.number().finite().nonnegative("MRP cannot be negative."),
   sellingPrice: z.coerce.number().finite().nonnegative("Selling price cannot be negative."),
   minStockLevel: z.coerce.number().int().nonnegative().default(0),
 });

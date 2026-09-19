@@ -10,8 +10,8 @@ import { productUnitOptions } from "@/constants/product-units";
 
 export type ProductFormValues = {
   name: string;
-  sku: string;
   unit: ProductUnit;
+  mrp: string;
   sellingPrice: string;
   minStockLevel: string;
 };
@@ -19,8 +19,8 @@ export type ProductFormValues = {
 function toFormValues(product?: Product): ProductFormValues {
   return {
     name: product?.name ?? "",
-    sku: product?.sku ?? "",
     unit: product?.unit ?? "PIECE",
+    mrp: product?.mrp ?? "",
     sellingPrice: product?.sellingPrice ?? "",
     minStockLevel: product ? String(product.minStockLevel) : "0",
   };
@@ -53,14 +53,6 @@ export function ProductForm({ product, onSubmit, onCancel, submitting = false, e
             required
           />
         </FormField>
-        <FormField label="SKU" htmlFor="sku" required>
-          <Input
-            id="sku"
-            value={values.sku}
-            onChange={(event) => setValues((prev) => ({ ...prev, sku: event.target.value }))}
-            required
-          />
-        </FormField>
         <FormField label="Unit" htmlFor="unit" required>
           <Select value={values.unit} onValueChange={(value) => setValues((prev) => ({ ...prev, unit: value as ProductUnit }))}>
             <SelectTrigger id="unit">
@@ -74,6 +66,17 @@ export function ProductForm({ product, onSubmit, onCancel, submitting = false, e
               ))}
             </SelectContent>
           </Select>
+        </FormField>
+        <FormField label="MRP" htmlFor="mrp" required>
+          <Input
+            id="mrp"
+            type="number"
+            step="0.01"
+            min="0"
+            value={values.mrp}
+            onChange={(event) => setValues((prev) => ({ ...prev, mrp: event.target.value }))}
+            required
+          />
         </FormField>
         <FormField label="Selling price" htmlFor="sellingPrice" required>
           <Input

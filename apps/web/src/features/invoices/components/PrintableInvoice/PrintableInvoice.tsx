@@ -178,6 +178,7 @@ function InvoiceItems({ items, startIndex }: { items: InvoiceItem[]; startIndex:
           <th className="border-b border-black px-1.5 py-1 text-left font-medium">Goods / Services supplied</th>
           <th className="border-b border-black px-1.5 py-1 text-right font-medium">Qty.</th>
           <th className="border-b border-black px-1.5 py-1 text-left font-medium">Unit</th>
+          <th className="border-b border-black px-1.5 py-1 text-right font-medium">MRP (₹)</th>
           <th className="border-b border-black px-1.5 py-1 text-right font-medium">Rate (₹)</th>
           <th className="border-b border-black px-1.5 py-1 text-right font-medium">Amount (₹)</th>
         </tr>
@@ -190,6 +191,9 @@ function InvoiceItems({ items, startIndex }: { items: InvoiceItem[]; startIndex:
             <td className="border-b border-gray-300 px-1.5 py-0.5 text-right">{item.quantity}</td>
             <td className="border-b border-gray-300 px-1.5 py-0.5">
               {item.product?.unit ? productUnitLabels[item.product.unit] : "—"}
+            </td>
+            <td className="border-b border-gray-300 px-1.5 py-0.5 text-right">
+              {formatCurrency(Number(item.mrp))}
             </td>
             <td className="border-b border-gray-300 px-1.5 py-0.5 text-right">
               {formatCurrency(Number(item.unitPrice))}
