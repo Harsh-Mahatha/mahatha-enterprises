@@ -66,7 +66,7 @@ export default function InvoicePrintPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-8 print:p-0">
+    <div className="mx-auto w-full max-w-3xl p-8 print:max-w-none print:p-0">
       <div className="mb-4 flex justify-end print:hidden">
         <Button onClick={() => window.print()}>
           <Printer />

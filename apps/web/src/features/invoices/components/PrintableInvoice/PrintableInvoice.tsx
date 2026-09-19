@@ -14,17 +14,41 @@ const STATUS_LABELS: Record<InvoiceStatus, string> = {
   UNPAID: "Unpaid",
 };
 
-// Kept low enough that a page (header + this many rows + totals/signature on
-// the last one) stays within roughly half an A4 page — see globals.css for
-// the matching @page margin and the page-break rule between blocks.
-const ITEMS_PER_PAGE = 12;
+// Every page-block is exactly half of A4's printable height: 297mm minus the
+// 0.75cm @page margin top and bottom (see globals.css), halved. The height is
+// fixed regardless of how many rows a block holds, so a short final block
+// looks the same as a full one.
+const BLOCK_HEIGHT_CLASS = "h-[141mm]";
 
-function chunk<T>(items: T[], size: number): T[][] {
-  if (items.length === 0) return [[]];
+// Row budgets that fit inside that height. Continuation blocks only carry the
+// "continued" footer, so they hold more rows than the last block, which also
+// carries the totals, amount-in-words and signature. The last block's budget
+// shrinks further for each discount line and for notes (see getLastPageCapacity).
+const ITEMS_PER_FULL_PAGE = 15;
+const ITEMS_ON_LAST_PAGE = 10;
+
+function getLastPageCapacity(invoice: Invoice): number {
+  const extraLines = (invoice.discounts?.length ?? 0) + (invoice.notes ? 1 : 0);
+  return Math.max(1, ITEMS_ON_LAST_PAGE - extraLines);
+}
+
+// Fills continuation blocks first, then splits what's left so the last block
+// never exceeds its (smaller) capacity. When the remainder would fit on one
+// full page but not on the last one, it's split roughly in half instead of
+// leaving a last block with only totals.
+function paginate<T>(items: T[], lastPageCapacity: number): T[][] {
   const pages: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    pages.push(items.slice(i, i + size));
+  let index = 0;
+  while (items.length - index > lastPageCapacity) {
+    const remaining = items.length - index;
+    const take =
+      remaining > ITEMS_PER_FULL_PAGE
+        ? ITEMS_PER_FULL_PAGE
+        : remaining - Math.min(lastPageCapacity, Math.ceil(remaining / 2));
+    pages.push(items.slice(index, index + take));
+    index += take;
   }
+  pages.push(items.slice(index));
   return pages;
 }
 
@@ -35,25 +59,31 @@ function chunk<T>(items: T[], size: number): T[][] {
 // ruled item table, boxed totals) rather than the app's usual card style.
 //
 // Long item lists are paginated rather than left to grow the box taller:
-// each page-block repeats the header/customer details and holds up to
-// ITEMS_PER_PAGE rows, with totals/amount-in-words/signature only on the
-// last one.
+// each page-block is a fixed-height column that repeats the header/customer
+// details, with totals/amount-in-words/signature only on the last one. The
+// item area flexes to fill the leftover height, so the footer sits at the
+// bottom of the block however few rows it has.
 export function PrintableInvoice({ invoice, companySettings }: PrintableInvoiceProps) {
   const outstanding = Number(getInvoiceOutstanding(invoice));
-  const pages = chunk(invoice.items ?? [], ITEMS_PER_PAGE);
+  const pages = paginate(invoice.items ?? [], getLastPageCapacity(invoice));
+  let startIndex = 0;
 
   return (
     <>
       {pages.map((pageItems, pageIndex) => {
         const isLastPage = pageIndex === pages.length - 1;
+        const pageStartIndex = startIndex;
+        startIndex += pageItems.length;
         return (
           <div
             key={pageIndex}
-            className="invoice-page-block mb-6 border border-black bg-white text-xs text-black last:mb-0"
+            className={`invoice-page-block mb-6 flex ${BLOCK_HEIGHT_CLASS} flex-col border border-black bg-white text-xs text-black last:mb-0`}
           >
             <InvoiceHeader companySettings={companySettings} invoice={invoice} />
             <CustomerDetails invoice={invoice} />
-            <InvoiceItems items={pageItems} startIndex={pageIndex * ITEMS_PER_PAGE} />
+            <div className="flex-1">
+              <InvoiceItems items={pageItems} startIndex={pageStartIndex} />
+            </div>
             {isLastPage ? (
               <>
                 <InvoiceSummary invoice={invoice} outstanding={outstanding} />
