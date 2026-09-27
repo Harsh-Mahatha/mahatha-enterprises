@@ -5,6 +5,14 @@ import * as sessionRepository from "../repositories/session.repository";
 import * as userRepository from "../repositories/user.repository";
 import { hashPassword, verifyPassword } from "../utils/password";
 import { generateSessionToken, hashSessionToken } from "../utils/tokens";
+import { TtlCache } from "../utils/ttl-cache";
+
+// Every authenticated request looks up its session, so resolved sessions are
+// cached briefly (keyed by token hash) to save a database query per request.
+// Logout and password changes evict entries here directly; the short TTL
+// bounds staleness if a session is removed any other way.
+const SESSION_CACHE_TTL_MS = 60_000;
+const sessionCache = new TtlCache<string, { user: AuthUser; expiresAt: Date }>(SESSION_CACHE_TTL_MS);
 
 // A precomputed hash so login takes the same time whether or not the email
 // exists, avoiding user-enumeration via response timing.
@@ -45,15 +53,26 @@ export async function login(email: string, password: string): Promise<LoginResul
 }
 
 export async function logout(token: string): Promise<void> {
-  await sessionRepository.deleteSessionByTokenHash(hashSessionToken(token));
+  const tokenHash = hashSessionToken(token);
+  sessionCache.delete(tokenHash);
+  await sessionRepository.deleteSessionByTokenHash(tokenHash);
 }
 
 export async function getSessionUser(token: string): Promise<AuthUser | null> {
-  const session = await sessionRepository.findSessionByTokenHash(hashSessionToken(token));
+  const tokenHash = hashSessionToken(token);
+  const cached = sessionCache.get(tokenHash);
+  if (cached && cached.expiresAt >= new Date()) {
+    return cached.user;
+  }
+
+  const session = await sessionRepository.findSessionByTokenHash(tokenHash);
   if (!session || session.expiresAt < new Date()) {
+    sessionCache.delete(tokenHash);
     return null;
   }
-  return { id: session.user.id, name: session.user.name, email: session.user.email };
+  const user = { id: session.user.id, name: session.user.name, email: session.user.email };
+  sessionCache.set(tokenHash, { user, expiresAt: session.expiresAt });
+  return user;
 }
 
 export async function changePassword(
@@ -75,5 +94,7 @@ export async function changePassword(
   const passwordHash = await hashPassword(newPassword);
   await userRepository.updateUserPassword(userId, passwordHash);
   // Changing your password should not silently keep other devices signed in.
-  await sessionRepository.deleteOtherSessionsForUser(userId, hashSessionToken(currentToken));
+  const currentTokenHash = hashSessionToken(currentToken);
+  sessionCache.deleteWhere((entry, tokenHash) => entry.user.id === userId && tokenHash !== currentTokenHash);
+  await sessionRepository.deleteOtherSessionsForUser(userId, currentTokenHash);
 }

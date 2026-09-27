@@ -47,6 +47,8 @@ export function ProductForm({ product, onSubmit, onCancel, submitting = false, e
   const { data: units, isLoading: unitsLoading } = useQuery({
     queryKey: ["units"],
     queryFn: unitService.listUnits,
+    // Only changes through AddUnitDialog, which updates the cache itself.
+    staleTime: Infinity,
   });
 
   // Keep the product's current unit selectable even if it's missing from the

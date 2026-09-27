@@ -41,6 +41,8 @@ export function CompanySettingsForm() {
   const { data: settings, isLoading, error, refetch } = useQuery({
     queryKey: SETTINGS_QUERY_KEY,
     queryFn: settingsService.getCompanySettings,
+    // Only changes through this form, which writes the result into the cache.
+    staleTime: Infinity,
   });
 
   if (isLoading) {

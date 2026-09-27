@@ -68,7 +68,7 @@ export default function InvoiceDetailPage() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href={`/invoices/${invoice.id}/print`}>
+              <Link href={`/invoices/${invoice.id}/print`} target="_blank" rel="noopener noreferrer">
                 <Printer />
                 Print
               </Link>

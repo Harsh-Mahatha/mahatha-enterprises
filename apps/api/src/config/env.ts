@@ -18,4 +18,7 @@ export const env = {
   port: Number(readEnv("PORT", "4000")),
   databaseUrl: readEnv("DATABASE_URL"),
   webOrigin: readEnv("WEB_ORIGIN", "http://localhost:3000"),
+  // Number of reverse-proxy hops in front of the API (e.g. "1" behind a
+  // single load balancer). Unset when the API is reached directly.
+  trustProxy: process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : undefined,
 };

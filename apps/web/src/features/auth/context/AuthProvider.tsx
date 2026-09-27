@@ -34,6 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user = null, isLoading } = useQuery({
     queryKey: ME_QUERY_KEY,
     queryFn: fetchCurrentUser,
+    // Login/logout write this directly and an expired session is caught by the
+    // 401 redirect in apiRequest, so there's no need to re-poll it.
+    staleTime: Infinity,
   });
 
   const login = useCallback(

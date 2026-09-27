@@ -182,7 +182,15 @@ export default function NewInvoicePage() {
             <Button variant="outline" onClick={() => router.push(`/invoices/${savedInvoiceId}`)}>
               No
             </Button>
-            <Button onClick={() => router.push(`/invoices/${savedInvoiceId}/print`)}>Print</Button>
+            <Button
+              onClick={() => {
+                // Print opens in its own tab; this tab moves on to the saved invoice.
+                window.open(`/invoices/${savedInvoiceId}/print`, "_blank", "noopener,noreferrer");
+                router.push(`/invoices/${savedInvoiceId}`);
+              }}
+            >
+              Print
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
