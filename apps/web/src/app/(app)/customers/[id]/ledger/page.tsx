@@ -11,7 +11,6 @@ import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 import { DescriptionItem } from "@/components/ui/DescriptionItem";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Pagination } from "@/components/tables/Pagination";
 import { LedgerTable } from "@/features/ledger";
@@ -44,13 +43,6 @@ export default function CustomerLedgerPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Breadcrumbs
-        items={[
-          { label: "Customers", href: "/customers" },
-          { label: data.customer.name, href: `/customers/${customerId}` },
-          { label: "Ledger" },
-        ]}
-      />
       <PageHeader
         title={`${data.customer.name} — Ledger`}
         description="Opening balance, invoices, and payments for this customer."

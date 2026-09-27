@@ -10,14 +10,6 @@ datasource db {
 // Enums
 // ---------------------------------------------------------------------------
 
-enum ProductUnit {
-  PIECE
-  BOX
-  KG
-  LITRE
-  METER
-}
-
 enum PaymentMode {
   CASH
   UPI
@@ -145,7 +137,10 @@ model Product {
   id            String      @id @default(uuid()) @db.Uuid
   name          String
   sku           String      @unique
-  unit          ProductUnit
+  // The unit's name (e.g. "Piece"), chosen from the Unit table. Stored by
+  // value rather than as a foreign key so products keep their unit label even
+  // if the unit list is later tidied up.
+  unit          String
   mrp           Decimal     @db.Decimal(12, 2)
   sellingPrice  Decimal     @db.Decimal(12, 2)
   minStockLevel Int         @default(0)
@@ -158,6 +153,14 @@ model Product {
   stockMovements StockMovement[]
 
   @@index([name])
+}
+
+// The selectable units for products. Seeded with the common ones; users can
+// add more from the product form as new kinds of products come in.
+model Unit {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now())
 }
 
 model StockMovement {

@@ -1,4 +1,4 @@
-import type { PaginatedData, Product, ProductUnit } from "@mahatha/types";
+import type { PaginatedData, Product } from "@mahatha/types";
 import { apiRequest, buildQuery } from "./client";
 
 export type ListProductsParams = {
@@ -9,7 +9,7 @@ export type ListProductsParams = {
 
 export type ProductInput = {
   name: string;
-  unit: ProductUnit;
+  unit: string;
   mrp: number;
   sellingPrice: number;
   minStockLevel: number;

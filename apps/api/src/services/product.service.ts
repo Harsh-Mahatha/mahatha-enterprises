@@ -2,6 +2,7 @@ import type { CreateProductInput, ListProductsQuery, UpdateProductInput } from "
 import { prisma } from "../config/prisma";
 import { AppError } from "../middleware/error-handler";
 import * as productRepository from "../repositories/product.repository";
+import * as unitService from "./unit.service";
 
 export async function listProducts(query: ListProductsQuery) {
   const skip = (query.page - 1) * query.pageSize;
@@ -31,6 +32,8 @@ export async function getProduct(id: string) {
 }
 
 export async function createProduct(input: CreateProductInput) {
+  const unit = await unitService.resolveUnitName(input.unit);
+
   // Sequential, race-free SKU generation (SKU-000001, ...) in the same
   // transaction as the insert, so a failed create doesn't burn a number.
   return prisma.$transaction(async (tx) => {
@@ -44,7 +47,7 @@ export async function createProduct(input: CreateProductInput) {
       {
         name: input.name,
         sku: `SKU-${String(counter.value).padStart(6, "0")}`,
-        unit: input.unit,
+        unit,
         mrp: input.mrp,
         sellingPrice: input.sellingPrice,
         minStockLevel: input.minStockLevel,
@@ -56,9 +59,10 @@ export async function createProduct(input: CreateProductInput) {
 
 export async function updateProduct(id: string, input: UpdateProductInput) {
   await getProduct(id);
+  const unit = await unitService.resolveUnitName(input.unit);
   return productRepository.updateProduct(id, {
     name: input.name,
-    unit: input.unit,
+    unit,
     mrp: input.mrp,
     sellingPrice: input.sellingPrice,
     minStockLevel: input.minStockLevel,

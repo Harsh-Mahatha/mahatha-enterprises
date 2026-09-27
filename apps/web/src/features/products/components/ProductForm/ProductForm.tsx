@@ -1,16 +1,21 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import type { Product, ProductUnit } from "@mahatha/types";
+import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import type { Product } from "@mahatha/types";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormField } from "@/components/forms/FormField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
-import { productUnitOptions } from "@/constants/product-units";
+import { AddUnitDialog } from "@/features/products/components/AddUnitDialog";
+import * as unitService from "@/services/api/units";
+
+const DEFAULT_UNIT = "Piece";
 
 export type ProductFormValues = {
   name: string;
-  unit: ProductUnit;
+  unit: string;
   mrp: string;
   sellingPrice: string;
   minStockLevel: string;
@@ -19,7 +24,7 @@ export type ProductFormValues = {
 function toFormValues(product?: Product): ProductFormValues {
   return {
     name: product?.name ?? "",
-    unit: product?.unit ?? "PIECE",
+    unit: product?.unit ?? DEFAULT_UNIT,
     mrp: product?.mrp ?? "",
     sellingPrice: product?.sellingPrice ?? "",
     minStockLevel: product ? String(product.minStockLevel) : "0",
@@ -36,6 +41,20 @@ export type ProductFormProps = {
 
 export function ProductForm({ product, onSubmit, onCancel, submitting = false, error }: ProductFormProps) {
   const [values, setValues] = useState<ProductFormValues>(() => toFormValues(product));
+  const [unitSelectOpen, setUnitSelectOpen] = useState(false);
+  const [addUnitOpen, setAddUnitOpen] = useState(false);
+
+  const { data: units, isLoading: unitsLoading } = useQuery({
+    queryKey: ["units"],
+    queryFn: unitService.listUnits,
+  });
+
+  // Keep the product's current unit selectable even if it's missing from the
+  // list (e.g. while the list is still loading).
+  const unitNames = units?.map((unit) => unit.name) ?? [];
+  if (values.unit && !unitNames.includes(values.unit)) {
+    unitNames.unshift(values.unit);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,16 +73,34 @@ export function ProductForm({ product, onSubmit, onCancel, submitting = false, e
           />
         </FormField>
         <FormField label="Unit" htmlFor="unit" required>
-          <Select value={values.unit} onValueChange={(value) => setValues((prev) => ({ ...prev, unit: value as ProductUnit }))}>
+          <Select
+            value={values.unit}
+            onValueChange={(value) => setValues((prev) => ({ ...prev, unit: value }))}
+            open={unitSelectOpen}
+            onOpenChange={setUnitSelectOpen}
+          >
             <SelectTrigger id="unit">
-              <SelectValue />
+              <SelectValue placeholder={unitsLoading ? "Loading units…" : "Select a unit"} />
             </SelectTrigger>
             <SelectContent>
-              {productUnitOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+              {unitNames.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
                 </SelectItem>
               ))}
+              <div className="mt-1 border-t border-border pt-1">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-primary hover:bg-accent focus:bg-accent focus:outline-none"
+                  onClick={() => {
+                    setUnitSelectOpen(false);
+                    setAddUnitOpen(true);
+                  }}
+                >
+                  <Plus className="size-4" />
+                  Add
+                </button>
+              </div>
             </SelectContent>
           </Select>
         </FormField>
@@ -101,6 +138,11 @@ export function ProductForm({ product, onSubmit, onCancel, submitting = false, e
         </FormField>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      <AddUnitDialog
+        open={addUnitOpen}
+        onOpenChange={setAddUnitOpen}
+        onCreated={(unit) => setValues((prev) => ({ ...prev, unit: unit.name }))}
+      />
       <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
         <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Cancel

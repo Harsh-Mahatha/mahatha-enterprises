@@ -1,6 +1,5 @@
 import type { PaginationMeta } from "./api-response";
 import type { Invoice } from "./invoice";
-import type { ProductUnit } from "./product";
 import type { StockMovement } from "./stock-movement";
 
 export type SalesReportResult = {
@@ -31,7 +30,7 @@ export type StockReportItem = {
   id: string;
   name: string;
   sku: string;
-  unit: ProductUnit;
+  unit: string;
   currentStock: string;
   minStockLevel: number;
   lowStock: boolean;

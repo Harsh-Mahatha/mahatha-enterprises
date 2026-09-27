@@ -1,10 +1,14 @@
-export type ProductUnit = "PIECE" | "BOX" | "KG" | "LITRE" | "METER";
+export type Unit = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
 
 export type Product = {
   id: string;
   name: string;
   sku: string;
-  unit: ProductUnit;
+  unit: string;
   mrp: string;
   sellingPrice: string;
   minStockLevel: number;

@@ -25,7 +25,6 @@ import { FormField } from "@/components/forms/FormField";
 import { SearchInput } from "@/components/forms/SearchInput";
 import { DataTable, type DataTableColumn } from "@/components/tables/DataTable";
 import { Pagination } from "@/components/tables/Pagination";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Toolbar } from "@/components/layout/Toolbar";
 
@@ -68,7 +67,6 @@ export default function StyleGuidePage() {
 
   return (
     <div className="flex flex-col gap-10 pb-10">
-      <Breadcrumbs items={[{ label: "Style Guide" }]} />
       <PageHeader
         title="Style Guide"
         description="Internal reference for the shared component library. Not part of the product navigation."

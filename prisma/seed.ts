@@ -24,6 +24,11 @@ async function main() {
   await prisma.customer.deleteMany();
   await prisma.companySettings.deleteMany();
 
+  await prisma.unit.deleteMany();
+  await prisma.unit.createMany({
+    data: ["Piece", "Box", "Kg", "Litre", "Meter"].map((name) => ({ name })),
+  });
+
   await prisma.companySettings.create({
     data: {
       businessName: "Mahatha Enterprises",
@@ -71,9 +76,9 @@ async function main() {
   }
 
   const productSeeds = [
-    { name: "Product A", sku: "PROD-A", unit: "PIECE" as const, mrp: 1100, sellingPrice: 1000, minStockLevel: 10, stock: 100 },
-    { name: "Product B", sku: "PROD-B", unit: "PIECE" as const, mrp: 550, sellingPrice: 500, minStockLevel: 10, stock: 150 },
-    { name: "Product C", sku: "PROD-C", unit: "PIECE" as const, mrp: 275, sellingPrice: 250, minStockLevel: 10, stock: 5 },
+    { name: "Product A", sku: "PROD-A", unit: "Piece", mrp: 1100, sellingPrice: 1000, minStockLevel: 10, stock: 100 },
+    { name: "Product B", sku: "PROD-B", unit: "Piece", mrp: 550, sellingPrice: 500, minStockLevel: 10, stock: 150 },
+    { name: "Product C", sku: "PROD-C", unit: "Piece", mrp: 275, sellingPrice: 250, minStockLevel: 10, stock: 5 },
   ];
 
   for (const seed of productSeeds) {

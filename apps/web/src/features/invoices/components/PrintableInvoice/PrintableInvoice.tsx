@@ -1,6 +1,5 @@
 import type { CompanySettings, Invoice, InvoiceItem, InvoiceStatus } from "@mahatha/types";
 import { getInvoiceOutstanding } from "@mahatha/calculations";
-import { productUnitLabels } from "@/constants/product-units";
 import { formatAmountInWords, formatCurrency, formatDate } from "@/utils/format";
 
 export type PrintableInvoiceProps = {
@@ -18,14 +17,16 @@ const STATUS_LABELS: Record<InvoiceStatus, string> = {
 // 0.75cm @page margin top and bottom (see globals.css), halved. The height is
 // fixed regardless of how many rows a block holds, so a short final block
 // looks the same as a full one.
-const BLOCK_HEIGHT_CLASS = "h-[141mm]";
+const BLOCK_HEIGHT_CLASS = "h-[135mm]";
 
-// Row budgets that fit inside that height. Continuation blocks only carry the
+// Row budgets that fit inside that height at the compact 10px type scale used
+// below (an item row is ~4.6mm). Continuation blocks only carry the
 // "continued" footer, so they hold more rows than the last block, which also
 // carries the totals, amount-in-words and signature. The last block's budget
 // shrinks further for each discount line and for notes (see getLastPageCapacity).
-const ITEMS_PER_FULL_PAGE = 15;
-const ITEMS_ON_LAST_PAGE = 10;
+// If the type scale or paddings change, re-check these against a printout.
+const ITEMS_PER_FULL_PAGE = 18;
+const ITEMS_ON_LAST_PAGE = 13;
 
 function getLastPageCapacity(invoice: Invoice): number {
   const extraLines = (invoice.discounts?.length ?? 0) + (invoice.notes ? 1 : 0);
@@ -66,18 +67,19 @@ function paginate<T>(items: T[], lastPageCapacity: number): T[][] {
 export function PrintableInvoice({ invoice, companySettings }: PrintableInvoiceProps) {
   const outstanding = Number(getInvoiceOutstanding(invoice));
   const pages = paginate(invoice.items ?? [], getLastPageCapacity(invoice));
-  let startIndex = 0;
+  const pageStartIndexes = pages.map((_, pageIndex) =>
+    pages.slice(0, pageIndex).reduce((count, page) => count + page.length, 0),
+  );
 
   return (
     <>
       {pages.map((pageItems, pageIndex) => {
         const isLastPage = pageIndex === pages.length - 1;
-        const pageStartIndex = startIndex;
-        startIndex += pageItems.length;
+        const pageStartIndex = pageStartIndexes[pageIndex];
         return (
           <div
             key={pageIndex}
-            className={`invoice-page-block mb-6 flex ${BLOCK_HEIGHT_CLASS} flex-col border border-black bg-white text-xs text-black last:mb-0`}
+            className={`invoice-page-block mb-6 flex ${BLOCK_HEIGHT_CLASS} flex-col border border-black bg-white text-[10px] leading-tight text-black last:mb-0`}
           >
             <InvoiceHeader companySettings={companySettings} invoice={invoice} />
             <CustomerDetails invoice={invoice} />
@@ -88,7 +90,7 @@ export function PrintableInvoice({ invoice, companySettings }: PrintableInvoiceP
               <>
                 <InvoiceSummary invoice={invoice} outstanding={outstanding} />
                 {invoice.notes ? (
-                  <div className="border-b border-black px-2 py-1">
+                  <div className="border-b border-black px-1.5 py-0.5">
                     <span className="font-semibold">Notes: </span>
                     {invoice.notes}
                   </div>
@@ -96,7 +98,7 @@ export function PrintableInvoice({ invoice, companySettings }: PrintableInvoiceP
                 <SignatureBlock />
               </>
             ) : (
-              <p className="border-b border-black px-2 py-1 italic text-gray-600">Continued on next page…</p>
+              <p className="border-b border-black px-1.5 py-0.5 italic text-gray-600">Continued on next page…</p>
             )}
           </div>
         );
@@ -108,16 +110,16 @@ export function PrintableInvoice({ invoice, companySettings }: PrintableInvoiceP
 function InvoiceHeader({ companySettings, invoice }: { companySettings: CompanySettings; invoice: Invoice }) {
   return (
     <div className="flex items-stretch justify-between border-b border-black">
-      <div className="flex-1 p-2">
+      <div className="flex-1 p-1.5">
         {companySettings.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- print output, not a routed app page
           <img
             src={companySettings.logoUrl}
             alt={companySettings.businessName}
-            className="mb-1 h-8 object-contain"
+            className="mb-0.5 h-6 object-contain"
           />
         ) : null}
-        <p className="text-lg font-bold uppercase tracking-wide">{companySettings.businessName}</p>
+        <p className="text-sm font-bold uppercase tracking-wide">{companySettings.businessName}</p>
         {companySettings.address ? <p className="mt-0.5">{companySettings.address}</p> : null}
         {companySettings.phone || companySettings.email ? (
           <p>
@@ -130,9 +132,9 @@ function InvoiceHeader({ companySettings, invoice }: { companySettings: CompanyS
           </p>
         ) : null}
       </div>
-      <div className="w-48 shrink-0 border-l border-black p-2 text-right">
-        <p className="text-lg font-bold tracking-wide">INVOICE</p>
-        <p className="mt-1">
+      <div className="w-44 shrink-0 border-l border-black p-1.5 text-right">
+        <p className="text-sm font-bold tracking-wide">INVOICE</p>
+        <p className="mt-0.5">
           Invoice No : <span className="font-semibold">{invoice.invoiceNumber}</span>
         </p>
         <p>
@@ -146,7 +148,7 @@ function InvoiceHeader({ companySettings, invoice }: { companySettings: CompanyS
 function CustomerDetails({ invoice }: { invoice: Invoice }) {
   return (
     <div className="flex items-stretch justify-between border-b border-black">
-      <div className="flex-1 p-2">
+      <div className="flex-1 p-1.5">
         <p>
           <span className="font-semibold">Billed to : </span>
           {invoice.customer?.name ?? "—"}
@@ -159,7 +161,7 @@ function CustomerDetails({ invoice }: { invoice: Invoice }) {
         ) : null}
         {invoice.customer?.phone ? <p>{invoice.customer.phone}</p> : null}
       </div>
-      <div className="w-48 shrink-0 border-l border-black p-2 text-right">
+      <div className="w-44 shrink-0 border-l border-black p-1.5 text-right">
         <p>
           <span className="font-semibold">Status : </span>
           {STATUS_LABELS[invoice.status]}
@@ -174,13 +176,13 @@ function InvoiceItems({ items, startIndex }: { items: InvoiceItem[]; startIndex:
     <table className="w-full border-collapse">
       <thead>
         <tr className="bg-gray-100">
-          <th className="border-b border-black px-1.5 py-1 text-left font-medium">S.No</th>
-          <th className="border-b border-black px-1.5 py-1 text-left font-medium">Goods / Services supplied</th>
-          <th className="border-b border-black px-1.5 py-1 text-right font-medium">Qty.</th>
-          <th className="border-b border-black px-1.5 py-1 text-left font-medium">Unit</th>
-          <th className="border-b border-black px-1.5 py-1 text-right font-medium">MRP (₹)</th>
-          <th className="border-b border-black px-1.5 py-1 text-right font-medium">Rate (₹)</th>
-          <th className="border-b border-black px-1.5 py-1 text-right font-medium">Amount (₹)</th>
+          <th className="border-b border-black px-1.5 py-0.5 text-left font-medium">S.No</th>
+          <th className="border-b border-black px-1.5 py-0.5 text-left font-medium">Goods / Services supplied</th>
+          <th className="border-b border-black px-1.5 py-0.5 text-right font-medium">Qty.</th>
+          <th className="border-b border-black px-1.5 py-0.5 text-left font-medium">Unit</th>
+          <th className="border-b border-black px-1.5 py-0.5 text-right font-medium">MRP (₹)</th>
+          <th className="border-b border-black px-1.5 py-0.5 text-right font-medium">Rate (₹)</th>
+          <th className="border-b border-black px-1.5 py-0.5 text-right font-medium">Amount (₹)</th>
         </tr>
       </thead>
       <tbody>
@@ -190,7 +192,7 @@ function InvoiceItems({ items, startIndex }: { items: InvoiceItem[]; startIndex:
             <td className="border-b border-gray-300 px-1.5 py-0.5">{item.product?.name ?? "—"}</td>
             <td className="border-b border-gray-300 px-1.5 py-0.5 text-right">{item.quantity}</td>
             <td className="border-b border-gray-300 px-1.5 py-0.5">
-              {item.product?.unit ? productUnitLabels[item.product.unit] : "—"}
+              {item.product?.unit ?? "—"}
             </td>
             <td className="border-b border-gray-300 px-1.5 py-0.5 text-right">
               {formatCurrency(Number(item.mrp))}
@@ -213,13 +215,13 @@ function InvoiceSummary({ invoice, outstanding }: { invoice: Invoice; outstandin
 
   return (
     <div className="flex items-stretch justify-between border-b border-black">
-      <div className="flex-1 p-2">
+      <div className="flex-1 p-1.5">
         <p>
           <span className="font-semibold">Amount in words : </span>
           {formatAmountInWords(Number(invoice.total))}
         </p>
         {discounts.length > 0 ? (
-          <div className="mt-1">
+          <div className="mt-0.5">
             <p className="font-semibold">Discounts</p>
             {discounts.map((discount) => (
               <div key={discount.id} className="flex justify-between gap-4">
@@ -230,16 +232,16 @@ function InvoiceSummary({ invoice, outstanding }: { invoice: Invoice; outstandin
           </div>
         ) : null}
       </div>
-      <div className="w-48 shrink-0 border-l border-black">
-        <div className="flex justify-between border-b border-gray-300 px-1.5 py-1">
+      <div className="w-44 shrink-0 border-l border-black">
+        <div className="flex justify-between border-b border-gray-300 px-1.5 py-0.5">
           <span className="font-semibold">Grand Total</span>
           <span className="font-semibold">{formatCurrency(Number(invoice.total))}</span>
         </div>
-        <div className="flex justify-between border-b border-gray-300 px-1.5 py-1">
+        <div className="flex justify-between border-b border-gray-300 px-1.5 py-0.5">
           <span>Payment Received</span>
           <span>{formatCurrency(Number(invoice.amountPaid))}</span>
         </div>
-        <div className="flex justify-between bg-gray-100 px-1.5 py-1">
+        <div className="flex justify-between bg-gray-100 px-1.5 py-0.5">
           <span className="font-semibold">Outstanding</span>
           <span className="font-semibold">{formatCurrency(outstanding)}</span>
         </div>
@@ -250,10 +252,10 @@ function InvoiceSummary({ invoice, outstanding }: { invoice: Invoice; outstandin
 
 function SignatureBlock() {
   return (
-    <div className="flex items-end justify-between p-2 pt-6">
+    <div className="flex items-end justify-between p-1.5 pt-5">
       <p>Receiver&apos;s Signature</p>
       <div className="text-right">
-        <p className="w-36 border-t border-black pt-0.5">Authorised Signatory</p>
+        <p className="w-32 border-t border-black pt-0.5">Authorised Signatory</p>
       </div>
     </div>
   );

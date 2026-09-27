@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient, ProductUnit } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "../config/prisma";
 
 type Client = PrismaClient | Prisma.TransactionClient;
@@ -40,7 +40,7 @@ export function findAllActiveProducts(client: Client = prisma) {
 
 export type ProductUpdateData = {
   name: string;
-  unit: ProductUnit;
+  unit: string;
   mrp: number;
   sellingPrice: number;
   minStockLevel: number;

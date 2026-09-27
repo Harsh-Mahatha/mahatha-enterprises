@@ -9,6 +9,7 @@ import { paymentRouter } from "./payment.routes";
 import { productRouter } from "./product.routes";
 import { reportsRouter } from "./reports.routes";
 import { settingsRouter } from "./settings.routes";
+import { unitRouter } from "./unit.routes";
 
 export const apiRouter = Router();
 
@@ -17,6 +18,7 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/customers", customerRouter);
 apiRouter.use("/products", productRouter);
+apiRouter.use("/units", unitRouter);
 apiRouter.use("/inventory", inventoryRouter);
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/invoices", invoiceRouter);

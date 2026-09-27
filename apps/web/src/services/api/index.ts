@@ -9,3 +9,4 @@ export * as ledgerService from "./ledger";
 export * as invoiceService from "./invoices";
 export * as dashboardService from "./dashboard";
 export * as reportsService from "./reports";
+export * as unitService from "./units";

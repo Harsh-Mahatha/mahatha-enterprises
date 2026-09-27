@@ -1,12 +1,16 @@
 import { z } from "zod";
 import { paginationQuerySchema } from "./pagination";
 
-export const productUnitValues = ["PIECE", "BOX", "KG", "LITRE", "METER"] as const;
-export const productUnitSchema = z.enum(productUnitValues);
+export const unitNameSchema = z.string().trim().min(1, "Unit is required.").max(50, "Unit name is too long.");
+
+export const createUnitSchema = z.object({
+  name: unitNameSchema,
+});
+export type CreateUnitInput = z.infer<typeof createUnitSchema>;
 
 export const createProductSchema = z.object({
   name: z.string().trim().min(1, "Name is required.").max(200),
-  unit: productUnitSchema,
+  unit: unitNameSchema,
   mrp: z.coerce.number().finite().nonnegative("MRP cannot be negative."),
   sellingPrice: z.coerce.number().finite().nonnegative("Selling price cannot be negative."),
   minStockLevel: z.coerce.number().int().nonnegative().default(0),
