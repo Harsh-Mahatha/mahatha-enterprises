@@ -2,8 +2,6 @@
 
 In-house invoicing, customer ledger, sales, and stock management application.
 
-See [`Mahatha_Enterprises_V1_Claude_Code_Prompt.md`](../Mahatha_Enterprises_V1_Claude_Code_Prompt.md) for the full V1 product scope and build plan.
-
 ## Features (V1)
 
 - **Authentication** — login, logout, change password (server-side sessions, not JWT)
